@@ -32,6 +32,13 @@ about this because private files could be committed by accident. Choose a folder
 outside Git unless you intend it; an audit error means private files are
 actually tracked.
 
-**`student-workspace check` exits 2.** Something is stale, for example
-collection has not run recently or generated outputs need rebuilding; the output
-names the tool. Exit 1 is an error to fix first.
+**`student-workspace check` says `stale`.** A tool needs a refresh, for
+example collection hasn't run recently or generated files need rebuilding; the
+output names the tool and what to run. `error` is a problem to fix first. (For
+scripts: exit code 0 is current, 2 stale, 1 error.)
+
+**Updating from PowerShell instead of the wizard.** From the workspace folder,
+`.\tools\.venv\Scripts\student-workspace.exe update .` installs the latest
+release, or says you're already current. Like the wizard, it backs up first;
+setup keeps the three most recent of these backups in
+`.student-workspace\backups\`.

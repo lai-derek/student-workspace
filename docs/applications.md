@@ -1,8 +1,9 @@
-# Application handoffs
+# Application drafts
 
-A handoff is a request your AI agent works on: it creates a folder of
-instructions for one application (a resume, cover letter, essay or short
-answers). The agent drafts the material from your saved evidence, and a check
+To get help with one application (a resume, cover letter, essay or short
+answers), you create a request folder, called a handoff, with instructions for
+your AI agent. The agent drafts the material from your saved documents and
+notes, and a check
 confirms that the result is complete before you use it. Nothing is submitted
 for you.
 
