@@ -232,13 +232,22 @@ class Wizard(ttk.Frame):
                 box.state(["disabled"])
             row += 1
             if not current:
+                option_boxes: list[ttk.Checkbutton] = []
                 for option in entry.get("setup_options", []):
                     key = (name, option["name"])
                     option_var = self.option_vars.setdefault(key, tk.BooleanVar(value=option["default"]))
-                    ttk.Checkbutton(self.body, text=option["label"], variable=option_var).grid(
-                        row=row, column=0, sticky="w", padx=(28, 0), pady=1
-                    )
+                    option_box = ttk.Checkbutton(self.body, text=option["label"], variable=option_var)
+                    option_box.grid(row=row, column=0, sticky="w", padx=(28, 0), pady=1)
+                    option_boxes.append(option_box)
                     row += 1
+
+                # An option only applies to a chosen tool, so it is greyed out until then.
+                def sync(var: tk.BooleanVar = var, boxes: list[ttk.Checkbutton] = option_boxes) -> None:
+                    for option_box in boxes:
+                        option_box.state(["!disabled"] if var.get() else ["disabled"])
+
+                box.configure(command=sync)
+                sync()
 
     def page_summary(self) -> None:
         self.heading.configure(text="Summary")
@@ -256,8 +265,17 @@ class Wizard(ttk.Frame):
             for option in self.options().get(row["name"], []):
                 labels = {item["name"]: item["label"] for item in row.get("setup_options", [])}
                 lines.append(f"    {labels.get(option, option)}")
+        if rows and all(row["action"] == "keep" for row in rows):
+            lines += [
+                "",
+                "Everything is already current. Install reinstalls the same versions to repair them.",
+            ]
         if self.installed():
-            lines += ["", "A full backup is made first in .student-workspace/backups/."]
+            lines += [
+                "",
+                "A full backup is made first in .student-workspace/backups/ "
+                f"(setup keeps the {core.KEEP_UPDATE_BACKUPS} most recent).",
+            ]
         self.text("\n".join(lines), 0)
         self.next_button.configure(text="Install")
 

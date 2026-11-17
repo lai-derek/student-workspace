@@ -6,9 +6,11 @@
 Each --tool is a checkout whose pyproject.toml version is tagged v<version>.
 The script zips each tag with `git archive`, records the ZIP's SHA-256 in
 release.json and writes Student-Tools-Setup.zip, all into --output (default
-dist/). Publish them by creating a release on lai-derek/student-workspace with
-tag <release> (e.g. 2026.11.0) and uploading every file from --output; the
-release.json URLs point at those uploads.
+dist/). It also writes RELEASE_NOTES.md there, the start of the release
+description with a direct setup link. Publish by creating a release on
+lai-derek/student-workspace with tag <release> (e.g. 2026.11.0), using
+RELEASE_NOTES.md as the description (`--notes-file`) and uploading every other
+file from --output; the release.json URLs point at those uploads.
 
 With --local-archives DIR the script instead zips each checkout's Git-visible
 working files into DIR and points release.json at them as file: URLs, which is
@@ -80,6 +82,25 @@ def tag_archive(checkout: Path, info: dict, directory: Path) -> Path:
     return archive
 
 
+def release_notes(release: str, tools: list[dict]) -> str:
+    """Release description: one obvious download link, then the tested versions."""
+    setup = (
+        f"https://github.com/{OWNER}/student-workspace/releases/download/{release}/Student-Tools-Setup.zip"
+    )
+    rows = "\n".join(
+        f"| [{tool['display_name']}](https://github.com/{OWNER}/{tool['name']}) | {tool['version']} |"
+        for tool in tools
+    )
+    return (
+        f"**Install (Windows):** download **[Student-Tools-Setup.zip]({setup})**, extract it "
+        "(right-click, Extract All) and double-click `Install.cmd`. Then choose a folder and the "
+        "tools you want. You need Python 3.14 or newer; setup offers to install it with winget "
+        "if it's missing.\n\n"
+        "The other files below are downloaded by setup; you don't need them.\n\n"
+        f"| Tool | Version |\n| --- | --- |\n{rows}\n"
+    )
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
         description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
@@ -121,6 +142,7 @@ def main(argv: list[str] | None = None) -> int:
         for name, source in SETUP_FILES.items():
             bundle.write(source, f"Student-Tools-Setup/{name}")
         bundle.writestr("Student-Tools-Setup/release.json", text)
+    (output / "RELEASE_NOTES.md").write_text(release_notes(args.release, tools), encoding="utf-8")
     print(f"wrote release files to {output}")
     return 0
 

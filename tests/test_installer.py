@@ -85,17 +85,18 @@ fake-tool = "fake_tool:main"
 
 def core_archive(directory: Path, version: str) -> Path:
     """The real student-workspace checkout, optionally relabelled as another version."""
-    info = {"name": "student-workspace", "version": "0.1.0"}
+    current = build_release.tool_info(REPO)["version"]
+    info = {"name": "student-workspace", "version": current}
     built = build_release.local_archive(REPO, info, directory / "built")
-    if version == "0.1.0":
+    if version == current:
         return built
     archive = directory / f"student-workspace-{version}.zip"
     with zipfile.ZipFile(built) as source, zipfile.ZipFile(archive, "w") as target:
         for item in source.infolist():
             data = source.read(item)
-            name = item.filename.replace("student-workspace-0.1.0/", f"student-workspace-{version}/", 1)
+            name = item.filename.replace(f"student-workspace-{current}/", f"student-workspace-{version}/", 1)
             if name.endswith(("pyproject.toml", "student_workspace/__init__.py")):
-                data = data.replace(b'"0.1.0"', f'"{version}"'.encode())
+                data = data.replace(f'"{current}"'.encode(), f'"{version}"'.encode())
             target.writestr(name, data)
     return archive
 
@@ -244,7 +245,20 @@ def test_add_tool_then_update_keeps_personal_files_and_rolls_back_a_failure(tmp_
     assert "## Fake tool 0.2.0" in (root / "tools" / "fake-tool" / "section.md").read_text()
     assert cli(root, "--version").stdout.strip() == "student-workspace 0.1.1"
     assert cli(root, "check", str(root)).returncode == 0
-    assert len(list((root / ".student-workspace" / "backups").glob("pre-update-*.zip"))) == 3
+    backups = root / ".student-workspace" / "backups"
+    assert len(list(backups.glob("pre-update-*.zip"))) == 3
+
+    # Already current: the command line does nothing unless asked to reinstall.
+    release_path = str(tmp_path / "r2.json")
+    _write(Path(release_path), releases["r2"])
+    current = cli(root, "update", str(root), "--release", release_path)
+    assert current.returncode == 0 and "Already current" in current.stdout
+    assert len(list(backups.glob("pre-update-*.zip"))) == 3
+    reinstall = cli(root, "update", str(root), "--release", release_path, "--reinstall")
+    assert reinstall.returncode == 0, reinstall.stderr
+    # Each successful run keeps only the most recent automatic backups.
+    assert len(list(backups.glob("pre-update-*.zip"))) == installer.KEEP_UPDATE_BACKUPS
+    assert personal_digest(root) == personal
 
 
 def test_git_checkout_tools_are_never_replaced(tmp_path, releases):

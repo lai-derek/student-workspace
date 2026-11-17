@@ -87,8 +87,16 @@ def test_pages_for_a_new_workspace(tmp_path, wizard_module, root):
     app.next()
     boxes = checkbuttons(app.body)
     assert boxes[0] == ("Student Workspace (required) 0.1.0", True)
-    assert ("Daily", False) in boxes
-    app.selected["opportunity-discovery"].set(True)
+    # A tool's option is greyed out until the tool itself is chosen.
+    assert ("Daily", True) in boxes
+    tool_box = next(
+        child
+        for child in app.body.winfo_children()
+        if child.winfo_class() == "TCheckbutton" and child.cget("text").startswith("Opportunity Discovery")
+    )
+    tool_box.invoke()
+    assert app.selected["opportunity-discovery"].get() is True
+    assert ("Daily", False) in checkbuttons(app.body)
     app.next()
     summary = "\n".join(texts(app.body))
     assert "Install Student Workspace 0.1.0" in summary
@@ -126,3 +134,14 @@ def test_existing_workspace_shows_installed_tools_as_locked(tmp_path, wizard_mod
     assert "Update Student Workspace 0.1.0 (from 0.0.9)" in summary
     assert "Reinstall Academic Planning 0.3.0" in summary
     assert "A full backup is made first" in summary
+
+
+def test_summary_says_when_everything_is_already_current(tmp_path, wizard_module, root):
+    state = tmp_path / ".student-workspace"
+    state.mkdir()
+    tools = [{"name": "student-workspace", "version": "0.1.0", "path": "tools/student-workspace"}]
+    (state / "workspace.json").write_text(json.dumps({"tools": tools}), encoding="utf-8")
+    app = wizard_module.Wizard(root, RELEASE, tmp_path)
+    app.page = app.PAGES.index("summary")
+    app.show()
+    assert "Everything is already current" in "\n".join(texts(app.body))

@@ -1,17 +1,23 @@
 # Validation
 
-Version 0.1.0, checked 2026-11-16 on native Windows 11 with Python 3.15.2.
+Version 0.1.1, checked 2026-11-17 on native Windows 11 with Python 3.15.2.
+
+0.1.1 changes: `Install.cmd` explains how to extract the ZIP when it is run
+without the other setup files; a tool's setup option is greyed out until the
+tool is chosen; `update` does nothing when everything is already current (use
+`--reinstall` to repair); setup keeps the three most recent automatic backups;
+`snapshot list` says when there are none; the release script writes release
+notes with a direct setup link.
 
 | Check | Result |
 | --- | --- |
-| `python -m pytest` | 112 passed (includes real venv/pip installs) |
+| `python -m pytest` | 114 passed (includes real venv/pip installs and the Windows `Install.cmd` and `setup.ps1` checks) |
 | `ruff check`, `ruff format --check`, `mypy` | clean |
-| Wizard pages | every page driven in a hidden Tk window: required tool locked, Git warning, options, summary for new and existing workspaces, finish and error states |
-| Install core | fresh install with a tool option; adding a tool; update with personal files byte-identical; rollback of `tools/` and generated files after an induced setup failure; Git-checkout tool folders refused; missing, wrong or invalid SHA-256 and unsafe archives rejected |
-| `setup.ps1` | finds Python 3.14+; with no Python and no winget prints install guidance; with winget asks first, installs nothing on "no", runs winget only after "yes"; rejects Python 3.12; `Install.cmd` bypasses execution policy |
-| Local test release of all three tools (`build_release.py --local-archives`) | installed Opportunity Discovery alone, Academic Planning alone, and both into disposable folders: `check` exit 0 each time; dashboard served; academic build then check current; adding Academic Planning to an existing workspace kept personal files byte-identical and made a pre-update backup |
+| GitHub CI (0.1.0) | Windows 3.14 and 3.15, Ubuntu 3.15 passed |
+| Published release 2026.11.0 (0.1.0 with Opportunity Discovery 0.2.1 and Academic Planning 0.3.0) | downloaded from GitHub into disposable folders: Student Workspace alone, with each tool, with both, and tools added one at a time to an existing workspace; checksums matched and `check` exited 0 each time; personal files unchanged; backup, restore, handoff and `update` commands from the docs worked |
+| Visible wizard, clicked through by hand | 2026.11.0 with Academic Planning, and a local 0.1.1 test release with Opportunity Discovery: every page, install and Finished page with "Workspace check: current"; daily collection unchecked and greyed out until Opportunity Discovery is chosen |
+| Local 0.1.1 test release (`build_release.py --local-archives`) | upgraded workspaces installed from 2026.11.0, and fresh installs of every combination: `check` exit 0, one summary line per tool; a repeat `update` reported "Already current"; three automatic backups kept |
 | Backups | SQLite copied through the backup API (WAL contents included, sidecars excluded); restore drops stale journals; `tools/` excluded |
 
-Not verified yet: clicking through the visible wizard by hand, Linux, GitHub CI,
-and installing from a published release (tags and release assets do not exist
-until publication).
+Not verified yet: Linux, and Python installation through winget on a computer
+without Python (the prompt and refusal paths are tested with a stub).

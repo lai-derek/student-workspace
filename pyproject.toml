@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "student-workspace"
-version = "0.1.0"
+version = "0.1.1"
 description = "Shared setup, state, recovery and application handoffs for a private student workspace."
 readme = "README.md"
 requires-python = ">=3.14"

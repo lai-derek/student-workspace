@@ -53,6 +53,21 @@ def test_install_cmd_bypasses_execution_policy_and_keeps_errors_visible():
     assert 'if not "%SETUP_EXIT%"=="0" pause' in text
 
 
+def test_install_cmd_alone_says_to_extract_the_zip(tmp_path):
+    # Opening Install.cmd from inside the ZIP runs it without the other setup files.
+    (tmp_path / "Install.cmd").write_bytes((REPO / "installer" / "Install.cmd").read_bytes())
+    result = subprocess.run(
+        ["cmd.exe", "/c", str(tmp_path / "Install.cmd")],
+        input="\r\n",
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+    assert result.returncode == 1
+    assert "Extract the whole ZIP first" in result.stdout
+    assert "-File parameter" not in result.stdout + result.stderr
+
+
 def test_setup_messages_say_314_or_newer():
     script = SETUP.read_text(encoding="utf-8")
     assert "Python 3.14 or newer (3.15 is recommended)" in script

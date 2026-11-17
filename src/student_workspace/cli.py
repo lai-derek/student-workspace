@@ -150,7 +150,8 @@ def cmd_snapshot(args: argparse.Namespace) -> int:
         _emit(
             args,
             {"schema_version": "1.0", "snapshots": [item.to_dict() for item in snapshots]},
-            [f"{item.snapshot_id}  {item.created_at}  {len(item.files)} files" for item in snapshots],
+            [f"{item.snapshot_id}  {item.created_at}  {len(item.files)} files" for item in snapshots]
+            or ["No snapshots yet. Tools save one before they change generated knowledge."],
         )
     elif args.snapshot_command == "compare":
         result = compare_knowledge_snapshot(root, args.snapshot_id)
@@ -239,9 +240,20 @@ def cmd_update(args: argparse.Namespace) -> int:
             raise WorkspaceStateError("--option takes TOOL:OPTION")
         options.setdefault(tool, []).append(option)
     try:
+        release = installer.load_release(args.release)
+        if not args.reinstall and installer.already_current(Path(args.workspace), release, set(args.add)):
+            _emit(
+                args,
+                {"schema_version": "1.0", "release": release.get("release"), "changed": False},
+                [
+                    f"Already current with release {release.get('release')}; nothing to install.",
+                    "Use --reinstall to reinstall the same versions (for example to repair tools/).",
+                ],
+            )
+            return 0
         result = installer.install(
             Path(args.workspace),
-            installer.load_release(args.release),
+            release,
             set(args.add),
             options=options,
             progress=None
@@ -345,6 +357,9 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--release", default=None, help="release.json path or URL (default: latest release)")
     p.add_argument("--add", action="append", default=[], metavar="TOOL", help="also install this tool")
     p.add_argument("--option", action="append", default=[], metavar="TOOL:OPTION")
+    p.add_argument(
+        "--reinstall", action="store_true", help="reinstall even when everything is already current"
+    )
     return parser
 
 

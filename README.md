@@ -17,8 +17,9 @@ Tools you can install with it:
 You need Python 3.14 or newer (3.15 recommended). If setup can't find it, it
 offers to install it with winget and asks first.
 
-1. Download [Student-Tools-Setup.zip](https://github.com/lai-derek/student-workspace/releases/latest/download/Student-Tools-Setup.zip) and extract it.
-2. Double-click `Install.cmd`. Windows may ask once about an unverified publisher.
+1. Download [Student-Tools-Setup.zip](https://github.com/lai-derek/student-workspace/releases/latest/download/Student-Tools-Setup.zip) and extract it (right-click, Extract All).
+2. In the extracted folder, double-click `Install.cmd`. Windows may ask once
+   about an unverified publisher.
 3. In the wizard, choose a folder (default `Documents\Student Workspace`) and the
    tools you want. The last page can open the folder for you.
 
@@ -31,8 +32,10 @@ On Linux, run `python install.py` from the extracted folder for the same wizard
 ## Use
 
 Open the workspace folder in your AI agent and ask it to get you started, for
-example "add my resume" or "find internships for me". The generated
-`WORKSPACE.md` tells the agent how the folder and tools work.
+example "add my resume" or "help me draft this application". Each installed tool
+adds its own requests, such as "find internships for me" with Opportunity
+Discovery or "plan winter" with Academic Planning. The generated `WORKSPACE.md`
+tells the agent how the folder and tools work.
 
 To check that everything is set up correctly, open PowerShell in the workspace
 folder and run:
@@ -48,9 +51,10 @@ output names the tool), and 1 is an error to fix.
 
 Download the latest `Student-Tools-Setup.zip` again and run `Install.cmd` on
 the same folder. Setup backs up the workspace first, replaces only `tools/`, and
-puts the previous tools back if anything fails. From PowerShell in the workspace
-folder, `.\tools\.venv\Scripts\student-workspace.exe update .` does the same
-without the wizard.
+puts the previous tools back if anything fails. It keeps the three most recent
+of these automatic backups in `.student-workspace\backups\`. From PowerShell in
+the workspace folder, `.\tools\.venv\Scripts\student-workspace.exe update .`
+does the same without the wizard, and does nothing if you're already current.
 
 More: [backup and recovery](docs/recovery.md),
 [application handoffs](docs/applications.md),

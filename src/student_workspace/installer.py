@@ -29,6 +29,7 @@ CORE = "student-workspace"
 STATE_DIR = ".student-workspace"
 MANIFEST_NAME = "student-workspace-tool.json"
 USER_AGENT = "student-workspace-installer"
+KEEP_UPDATE_BACKUPS = 3
 Progress = Callable[[float, str], None]
 
 
@@ -118,6 +119,21 @@ def plan(workspace: Path, release: dict[str, Any], chosen: set[str]) -> list[dic
     if missing:
         raise InstallError(f"this release does not include installed tools: {sorted(missing)}")
     return rows
+
+
+def already_current(workspace: Path, release: dict[str, Any], chosen: set[str]) -> bool:
+    """True when every planned tool is installed at the release version and the environment exists."""
+    rows = plan(workspace, release, chosen)
+    venv_cli = _venv_bin(Path(workspace) / "tools" / ".venv", CORE)
+    return venv_cli.is_file() and all(row["action"] == "keep" for row in rows)
+
+
+def _prune_update_backups(backups: Path) -> None:
+    """Keep only the most recent automatic pre-update backups; user backups live elsewhere."""
+    automatic = sorted(backups.glob("pre-update-*.zip"))
+    for old in automatic[:-KEEP_UPDATE_BACKUPS]:
+        with contextlib.suppress(OSError):
+            old.unlink()
 
 
 def _venv_bin(venv: Path, command: str) -> Path:
@@ -328,6 +344,8 @@ def install(
             _remove_tree(leftover)
         except OSError:
             log.write(f"left {leftover} for the next run to remove")
+    if backup is not None:
+        _prune_update_backups(backup.parent)
     log.step(1.0, "Done")
     return {
         "workspace": str(workspace),
