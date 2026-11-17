@@ -1,0 +1,33 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "application-check-report.schema.json",
+  "title": "Read-only private application check report",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version", "request_path", "errors", "warnings", "response_status",
+    "fields", "local_links_checked", "valid"
+  ],
+  "properties": {
+    "schema_version": {"const": "1.0"},
+    "request_path": {"type": "string"},
+    "errors": {"type": "array", "items": {"type": "string"}},
+    "warnings": {"type": "array", "items": {"type": "string"}},
+    "response_status": {"enum": ["awaiting-response", "invalid-response", "drafted", "needs-input"]},
+    "fields": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["path", "words", "characters"],
+        "properties": {
+          "path": {"type": "string"},
+          "words": {"type": "integer", "minimum": 0},
+          "characters": {"type": "integer", "minimum": 0}
+        }
+      }
+    },
+    "local_links_checked": {"type": "integer", "minimum": 0},
+    "valid": {"type": "boolean"}
+  }
+}

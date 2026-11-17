@@ -1,0 +1,7 @@
+{
+  "schema_version": "1.0",
+  "fields": [
+    {"path": "drafts/synthetic-answer.txt", "max_words": 130, "max_characters": 900}
+  ],
+  "custom": {"synthetic_scenario": "application-field-file-checks"}
+}

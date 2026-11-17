@@ -1,0 +1,17 @@
+.venv/
+__pycache__/
+*.pyc
+*.egg-info/
+build/
+dist/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.work/
+# Private workspace state must never live in this checkout.
+/.student-workspace/
+/knowledge/
+/sources/
+/applications/
+/inbox/
+/tools/

@@ -1,0 +1,23 @@
+{
+  "schema_version": "1.0",
+  "name": "student-workspace",
+  "display_name": "Student Workspace",
+  "package": "student-workspace",
+  "owned_paths": [".student-workspace/", "applications/"],
+  "protected_paths": ["src/", "schemas/", "skills/"],
+  "sqlite_files": [],
+  "check_command": null,
+  "setup_command": null,
+  "setup_options": [],
+  "instructions": null,
+  "skills": [
+    "ingest-application-materials",
+    "retrieve-application-evidence",
+    "synthesize-application-content",
+    "build-targeted-resume",
+    "build-targeted-cover-letter",
+    "humanizer",
+    "review-reader-impact",
+    "audit-application-system"
+  ]
+}

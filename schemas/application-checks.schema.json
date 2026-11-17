@@ -1,0 +1,29 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "application-checks.schema.json",
+  "title": "Optional private application field-file limits",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "fields", "custom"],
+  "properties": {
+    "schema_version": {"const": "1.0"},
+    "fields": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["path"],
+        "anyOf": [
+          {"required": ["max_words"]},
+          {"required": ["max_characters"]}
+        ],
+        "properties": {
+          "path": {"type": "string", "pattern": "^(drafts|revisions)/[A-Za-z0-9][A-Za-z0-9._-]*$"},
+          "max_words": {"type": "integer", "minimum": 0},
+          "max_characters": {"type": "integer", "minimum": 0}
+        }
+      }
+    },
+    "custom": {"type": "object"}
+  }
+}

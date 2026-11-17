@@ -1,0 +1,4 @@
+interface:
+  display_name: "Application Material Ingester"
+  short_description: "Organize and label application source material"
+  default_prompt: "Use $ingest-application-materials to import these documents, reconcile duplicates, and ask me only the questions needed to label them accurately."

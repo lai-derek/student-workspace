@@ -1,0 +1,33 @@
+# Tech/business cover-letter conventions and ATS limits
+
+Research checked November 10, 2026. This is a US nonacademic starting point, not a universal industry rule or evidence of a particular employer's configuration. Employer and user instructions take priority. Recheck accepted formats, product behavior, or a firm's letter requirements when relevant to a live application; stable writing guidance need not be researched for every edit.
+
+## What the reader expects
+
+[MIT CAPD: How to write an effective cover letter](https://capd.mit.edu/resources/how-to-write-an-effective-cover-letter/) recommends no more than one page, 10-12 point type, the role/reference code, specific interest, and a few relevant examples that complement rather than retell the resume. It explicitly discusses transferable skills for internships and explaining an engineering-to-finance/consulting transition. Use a neutral hiring-manager salutation when a name is unknown. These are conventions, not a requirement to reproduce a sample's wording or stock closing.
+
+[Penn State Engineering: Cover Letters](https://www.career.engr.psu.edu/students/basics/cover-letter.aspx) recommends block business-letter formatting, a standard 10-12 point typeface coordinated with the resume, and DOC/DOCX/PDF submission. At research time, the official search-index text was readable but direct page fetching returned an error; do not treat unseen page details as verified.
+
+Business recruiting does not impose one universal letter rule. [BCG US associate FAQ](https://careers.bcg.com/global/en/on-campus/united-states-associate-job-opportunities) says summer/full-time cover letters are optional. [BCG Switzerland](https://careers.bcg.com/global/en/locations/switzerland/application-interviews) recommends a personal, concise letter of at most one page without standard phrases; that office's guidance is not a requirement for US applications. These examples support checking the actual role and office rather than assuming all business roles require letters or all tech roles ignore them.
+
+Practical drafting inference: technical roles often benefit from a developed engineering decision, debugging method, or validation result. Business/operations roles often benefit from problem framing, analysis, coordination, adoption, or a supported operational outcome. Select from the posting and evidence, not the industry label. Explain technical details sufficiently for a recruiter without stripping the substantive reasoning.
+
+## What scanners demonstrably do
+
+Keep these mechanisms separate:
+
+- **Parsing:** [Greenhouse: Unsuccessful resume parse](https://support.greenhouse.io/hc/en-us/articles/200989175-Unsuccessful-resume-parse) describes extracting resume information into profile fields. Images, complex layouts, columns, and contact information in headers/footers/text boxes can cause problems. A failed parse can leave the document attached and require manual entry; parsing failure is not itself documented as automatic rejection. Its 2.5 MB parsing limit concerns resumes, not a universal cover-letter upload cap. Applying simple text/layout precautions to letters is a conservative inference from this resume documentation.
+- **Keyword filtering:** [Greenhouse: Talent Filtering](https://support.greenhouse.io/hc/en-us/articles/27104809835291-Talent-Filtering) documents exact-keyword search across resumes and internal notes, using required/preferred terms and other candidate filters. This is evidence that accurate role terms can matter, not evidence that cover letters are included in the same search or that repetition improves ranking.
+- **AI matching:** [Greenhouse: Talent Matching](https://support.greenhouse.io/hc/en-us/articles/41396009937307-Talent-Matching), updated October 5, 2026, describes optional assistive AI against employer-selected criteria and resume content. It explicitly does not automatically advance or reject applicants. Do not turn the availability of this feature into a claim that an employer uses it or that a cover letter receives an AI score. Older blanket claims that Greenhouse has no AI matching are stale.
+- **Application rules:** [Greenhouse: Application rules overview](https://support.greenhouse.io/hc/en-us/articles/203105595-Application-rules-overview) documents configurable automatic actions, including rejection, based on application-question answers. This is distinct from parsing or document keyword matching. A letter cannot be assumed to override eligibility answers.
+- **Upload support:** [Greenhouse: Supported formats](https://support.greenhouse.io/hc/en-us/articles/360052218132-Supported-formats-for-resumes-cover-letters-and-other-candidate-uploads) lists DOC, DOCX, PDF, RTF, and TXT. The individual form's accepted formats/size limits control the deliverable. File acceptance does not prove how the content is evaluated.
+
+The mechanisms above document Greenhouse capabilities, not all ATS vendors, and not any particular employer's private recruiting setup. The linked formatting reference adds narrowly scoped Lever, Workable, Adobe, and pypdf evidence; none reveals an individual employer's configuration. No reviewed source establishes whether a given employer reads, searches, scores, or weights optional cover letters. Do not invent a match percentage, keyword-density target, rejection rate, AI-detection score, universal file preference, or guarantee of human review.
+
+## Resulting defaults
+
+For LaTeX output, font mapping/embedding, color and grayscale decisions, visible contact links, and extraction troubleshooting, read [PDF formatting guidance](pdf-formatting.md). It adds cross-vendor and PDF-format sources while distinguishing resume evidence from cover-letter inferences.
+
+Use a readable one-page PDF with selectable text for an ordinary upload when accepted, retaining editable source. Alongside a LaTeX resume, LaTeX is a convenient source format; it is not an employer expectation. Honor DOCX or text-box instructions and verify the exported artifact rather than assuming the authoring tool determines compatibility. Keep the visible contact heading in the normal body; do not confuse it with a running page header.
+
+Use supported job terminology naturally in explanations of actual work. Where useful, pair an acronym with its full term on first use. Do not add skills, hide text, repeat a posting, manufacture keyword lists, or rely on the letter to supply all of the resume's important qualifications. Preserve reading order, ordinary word spacing, and working contact links. These defaults aim for reader clarity and robust text extraction, without promising to pass an undocumented scanner.

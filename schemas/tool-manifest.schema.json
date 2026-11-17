@@ -1,0 +1,39 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "tool-manifest.schema.json",
+  "title": "student-workspace-tool.json: how a tool joins a student workspace",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "name", "display_name", "package"],
+  "$defs": {
+    "relative": {"type": "string", "pattern": "^(?![/\\\\])(?!.*(?:^|/)\\.{1,2}(?:/|$))[^\\\\:]+$"},
+    "command": {"type": ["array", "null"], "minItems": 1, "items": {"type": "string", "minLength": 1}}
+  },
+  "properties": {
+    "schema_version": {"const": "1.0"},
+    "name": {"type": "string", "pattern": "^[a-z][a-z0-9-]{0,63}$"},
+    "display_name": {"type": "string", "minLength": 1},
+    "package": {"type": "string", "minLength": 1, "description": "Installed distribution name; its version is recorded at registration."},
+    "owned_paths": {"type": "array", "items": {"$ref": "#/$defs/relative"}, "description": "Workspace paths this tool writes."},
+    "protected_paths": {"type": "array", "items": {"$ref": "#/$defs/relative"}, "description": "Tool-folder paths an agent changes only with the user's approval."},
+    "sqlite_files": {"type": "array", "items": {"$ref": "#/$defs/relative"}, "description": "Workspace SQLite databases; checked for integrity and copied consistently in backups."},
+    "check_command": {"$ref": "#/$defs/command", "description": "Exit 0 current, 2 stale, anything else an error. {workspace} is replaced."},
+    "setup_command": {"$ref": "#/$defs/command", "description": "Run after registration. {workspace} is replaced."},
+    "setup_options": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["name", "label", "args", "default"],
+        "properties": {
+          "name": {"type": "string", "pattern": "^[a-z][a-z0-9-]{0,63}$"},
+          "label": {"type": "string", "minLength": 1},
+          "args": {"type": "array", "minItems": 1, "items": {"type": "string"}},
+          "default": {"type": "boolean"}
+        }
+      }
+    },
+    "instructions": {"oneOf": [{"$ref": "#/$defs/relative"}, {"type": "null"}], "description": "Markdown rendered as this tool's WORKSPACE.md block."},
+    "skills": {"type": "array", "items": {"type": "string", "pattern": "^[a-z0-9][a-z0-9-]{0,63}$"}, "description": "Folders below skills/ that get discovery pointers."}
+  }
+}

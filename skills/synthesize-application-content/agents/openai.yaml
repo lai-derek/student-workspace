@@ -1,0 +1,4 @@
+interface:
+  display_name: "Application Content Synthesizer"
+  short_description: "Draft grounded applications, profiles, and outreach"
+  default_prompt: "Use $synthesize-application-content to draft audience-specific text from relevant personal evidence while preserving my voice and central question."

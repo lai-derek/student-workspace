@@ -1,0 +1,4 @@
+interface:
+  display_name: "Application System Auditor"
+  short_description: "Audit application evidence, writing, and skill behavior"
+  default_prompt: "Use $audit-application-system to review this session's evidence selection, writing, and skill behavior, then report concrete findings and authorized improvements."

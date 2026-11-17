@@ -1,0 +1,11 @@
+# Essays and short answers
+
+Answer the exact prompt. Prefer one or two developed examples over an activity list when the question asks for a story; experience inventories may need breadth. Make personal actions, stakes, and results clear. Count submission text separately from headings and notes; verify both word and character limits when supplied.
+
+Judge development separately from length. Before condensing, check whether the reader has enough explanation of the relevant motive, mechanism, or consequence. If removing filler exposes a gap, develop it from supported material or ask a focused question. A maximum is not a target, but unused space is not a virtue when an answer remains underdeveloped. Do not impose a fixed minimum or pad an answer that is already complete.
+
+For technical walkthroughs, explain the actual inputs, approach, checks and observed change in plain language; an account of directing AI is not a substitute unless the prompt asks for that process. In design answers, describe the situations or relationships represented by the proposed inputs, rather than relying on broad category names or a field inventory. Treat added context as a hypothesis to test, not proof that more data improves a model. Named concepts and technical vocabulary do not establish specificity by themselves: explain the causal step the reader needs to follow. Do not replace that explanation with a string of rhetorical questions or a list of concepts.
+
+Check target-specific coverage: impact, leadership, service, need, fit, or the concrete effect of an award may matter. Ask for a missing truthful detail only when it would materially strengthen the answer. Never invent stakes to complete a narrative.
+
+Across a packet, let each answer develop a different aspect of the applicant. Look for a connection through the actual motives, decisions, and reasoning; repeating a trait or replacing repeated words does not create narrative coherence. Judge whether a reader can explain what each example reveals without a slogan spelling it out. Reusing an event can work when the identity, decision, or challenge differs; avoid repeating its full setup and lesson. A reflection should interpret a real decision, not substitute a generic leadership principle for what happened. End when the answer is complete; report requested counts outside the submission text.

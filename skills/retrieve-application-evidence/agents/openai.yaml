@@ -1,0 +1,4 @@
+interface:
+  display_name: "Application Evidence Reviewer"
+  short_description: "Choose sourced facts for applications and profile fields"
+  default_prompt: "Use $retrieve-application-evidence to select relevant personal evidence, find meaningful recipient-specific common ground when applicable, and identify material gaps."

@@ -1,0 +1,4 @@
+interface:
+  display_name: "Application Final Editor"
+  short_description: "Remove AI mannerisms in final edits"
+  default_prompt: "Use $humanizer for a final pass that removes recognizable AI writing mannerisms while preserving my facts and voice."
