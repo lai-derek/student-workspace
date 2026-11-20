@@ -1,0 +1,32 @@
+schema_version: 1
+updated: '2031-10-01'
+term: Fall 2032
+route: Example exchange
+destination_preference:
+- Example Host A
+- Example Host B
+preference_source: sources/academic-planning/10a57cf6ec0c473f-synthetic-audit.md#baseline
+research_as_of: '2031-10-01'
+current_verification: Synthetic rules; not real program guidance
+research_sources:
+- sources/academic-planning/10a57cf6ec0c473f-synthetic-audit.md#baseline
+destinations:
+- code: EXA
+  label: Example Host A
+  eligibility: Example eligibility remains subject to official verification.
+  access: Faculty share, prerequisites and individual seat access are separate checks.
+- code: EXB
+  label: Example Host B
+  eligibility: Example program eligibility unresolved.
+  access: A host course is not automatically approved for home-university requirements.
+ge_plan:
+  summary: Reserve an unmet general requirement only after degree-use approval.
+historical_candidates:
+- course: EXAMPLE HOST COURSE
+  ucla_credit: unapproved
+  source_refs:
+  - sources/academic-planning/10a57cf6ec0c473f-synthetic-audit.md#baseline
+approved_courses: []
+questions:
+- Which host courses are available in the intended semester?
+- Which courses have written approval for remaining requirements?

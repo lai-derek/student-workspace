@@ -1,0 +1,4 @@
+interface:
+  display_name: "UCLA Class Planner"
+  short_description: "Manage and verify saved UCLA class plans"
+  default_prompt: "Use $ucla-class-planner for my UCLA course plans."

@@ -1,0 +1,10 @@
+{
+  "schema_version": 1,
+  "unit_label": "quarter units",
+  "period_order": [
+    "Winter",
+    "Spring",
+    "Summer",
+    "Fall"
+  ]
+}

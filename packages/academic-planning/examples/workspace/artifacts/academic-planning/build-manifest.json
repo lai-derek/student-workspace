@@ -1,0 +1,27 @@
+{
+  "schema_version": 1,
+  "extension_version": "0.3.0",
+  "built_at": "2026-11-12T08:58:09.284595+00:00",
+  "inputs": {
+    "knowledge/academics/academic.yaml": "5739a9f9b46e1f3823d79a672b21c5ff7694457cd1fc6f1329f9840db6bc392e",
+    "knowledge/goals/academic-career.md": "989e8cfe6e57ee5b8120b08f51c62c87320ac83ece5981216517946334ca2ca6",
+    "sources/academic-planning/10a57cf6ec0c473f-synthetic-audit.md": "10a57cf6ec0c473f8006669620366906a13657d780faed75e8703697b302b8fc",
+    "knowledge/academics/abroad.yaml": "52b8cbafe6d45e1a7d403afbfb40291e1fe7d5daec6090a55e1aeccfe0596e6d",
+    "knowledge/academics/planning-config.json": "86d5f6d410588c2e6cc9807165b3db314e3f18cf5401d6366e68098de270ac5f",
+    "generator/__init__.py": "a484841d36693fbbe6860d544235a210644012c700add782de38c612d1cbe620",
+    "generator/__main__.py": "935a1c1166b0c1ea35a82256345000bf2c73ded718d77773bc27a71ecce28f7d",
+    "generator/cli.py": "1f34130a735650db37beddc895d5806ba4aacef9c6b7796485bb080ca69d79e4",
+    "generator/core.py": "368bf188b8e2471005e8a5ed2f43142e3f4a52a3b69786a662f9cc94b3dc0d5d",
+    "generator/planning.py": "27dcc28f9e93cad48241de5eaada070840f562e7f317fbe1e0d3840259d83b4f",
+    "generator/records.py": "4244d6268d74a45b3f75d239c1ba2b8cc618bb2e0adce7fe2657c090fbfa4494",
+    "generator/render.py": "802a6c5c58476f1c9b0b11327c2685353d65f8a905d49c7940aae5071192ae52",
+    "generator/scheduling.py": "86233d20fe377e8eec54672df9689e5f24de58cd47048f07c0d03e635dfed1b0",
+    "generator/totals.py": "d374e4ed2a150d17c8698523e1caae52566c79cb7feaefd880baa720db3cb0e2"
+  },
+  "outputs": {
+    "Academic-Planner.xlsx": "3d8d616d6576b5036fd626eb9c811eada90deaccf4e9c5fdc40d74a649f18779",
+    "Academic-Advising.pdf": "16c2c8c99983270737f0ce8758d5ec88e26fe65a812bc431ce032dd9b22af8a6",
+    "Abroad-Brief.pdf": "e5ebdfa3a287852c978f18ddb509462410e4dda5a090f3f952f6459a2b94a7ce",
+    "Current-Academic-Record.md": "2bc7c5a0ce436cb145c92e2523da6a08bca4b08979dab2c883f763fcf0c7e2e3"
+  }
+}

@@ -1,0 +1,118 @@
+schema_version: 1
+updated: '2031-10-01'
+profile:
+  name: Example student
+  institution: Example University
+  major: Example Engineering
+  current_gpa: null
+source_keys:
+  audit: sources/academic-planning/10a57cf6ec0c473f-synthetic-audit.md#baseline
+credit_controls:
+  as_of: '2031-09-01'
+  transfer_units: 9
+  ap_units: 4
+  total_units: 13
+  source_refs:
+  - sources/academic-planning/10a57cf6ec0c473f-synthetic-audit.md#baseline
+requirements:
+- id: req-foundation
+  requirement: Mathematical foundation
+  units: 4
+  status: satisfied
+  selected_course: EXAMPLE MATH
+  prerequisites: null
+  notes: Recognized requirement; earned units are recorded separately.
+  source_refs:
+  - sources/academic-planning/10a57cf6ec0c473f-synthetic-audit.md#baseline
+- id: req-design
+  requirement: Engineering design
+  units: 4
+  status: in-progress
+  selected_course: EXAMPLE DESIGN
+  prerequisites: Foundation
+  notes: Current enrollment remains in progress.
+  source_refs:
+  - sources/academic-planning/10a57cf6ec0c473f-synthetic-audit.md#baseline
+- id: req-lab
+  requirement: Engineering laboratory
+  units: 2
+  status: remaining
+  selected_course: null
+  prerequisites: Design
+  notes: Proposed for the next term.
+  source_refs:
+  - sources/academic-planning/10a57cf6ec0c473f-synthetic-audit.md#baseline
+credits:
+- id: credit-math
+  institution: Example College
+  course: EXAMPLE MATH
+  term: Spring 2031
+  kind: transfer
+  awarded_units: 9
+  recognition: Mathematical foundation
+  evidence_date: '2031-09-01'
+  source_refs:
+  - sources/academic-planning/10a57cf6ec0c473f-synthetic-audit.md#baseline
+- id: credit-ap
+  institution: Example exam board
+  course: EXAMPLE AP
+  term: Spring 2031
+  kind: ap
+  awarded_units: 4
+  recognition: Units only; no laboratory credit
+  evidence_date: '2031-09-01'
+  source_refs:
+  - sources/academic-planning/10a57cf6ec0c473f-synthetic-audit.md#baseline
+- id: credit-duplicate
+  institution: Example exam board
+  course: EXAMPLE DUPLICATE
+  term: Spring 2031
+  kind: ap
+  awarded_units: 0
+  recognition: Duplicate award retained with zero units
+  evidence_date: '2031-09-01'
+  source_refs:
+  - sources/academic-planning/10a57cf6ec0c473f-synthetic-audit.md#baseline
+assignments:
+- requirement_id: req-design
+  course: EXAMPLE DESIGN
+  term: Fall 2031
+  units: 4
+  status: enrolled
+  decision_source: sources/academic-planning/10a57cf6ec0c473f-synthetic-audit.md#baseline
+current_coursework:
+- course: EXAMPLE DESIGN
+  units: 4
+  status: in-progress
+  source_refs:
+  - sources/academic-planning/10a57cf6ec0c473f-synthetic-audit.md#baseline
+audit_snapshot:
+  as_of: '2031-10-01'
+  earned_units: 13
+  in_progress_units: 4
+  minimum_degree_units: 120
+  remaining_earned_units_to_minimum: 107
+  remaining_units_if_in_progress_completed: 103
+  source_refs:
+  - sources/academic-planning/10a57cf6ec0c473f-synthetic-audit.md#baseline
+planning_targets:
+- course: EXAMPLE LAB
+  target_term: Winter 2032
+  commitment: Desired completion; not enrollment
+  source_refs:
+  - sources/academic-planning/10a57cf6ec0c473f-synthetic-audit.md#baseline
+term_proposal:
+  term: Winter 2032
+  status: proposed
+  courses:
+  - course: EXAMPLE LAB
+    units: 2
+    basis: Synthetic offering check; user has not selected a plan
+  availability_check:
+    term: Winter 2032
+    available_courses:
+    - EXAMPLE LAB
+    source_refs:
+    - sources/academic-planning/10a57cf6ec0c473f-synthetic-audit.md#baseline
+open_questions:
+- Confirm the actual schedule and student preferences before assigning future courses.

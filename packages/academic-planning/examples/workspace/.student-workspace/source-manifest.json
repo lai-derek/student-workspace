@@ -1,0 +1,16 @@
+{
+  "custom": {},
+  "external_references": [],
+  "imports": [
+    {
+      "custom": {
+        "tool": "academic-planning"
+      },
+      "imported_at": "2026-11-12T08:58:08.837853+00:00",
+      "original_name": "synthetic-audit.md",
+      "sha256": "10a57cf6ec0c473f8006669620366906a13657d780faed75e8703697b302b8fc",
+      "stored_path": "sources/academic-planning/10a57cf6ec0c473f-synthetic-audit.md"
+    }
+  ],
+  "schema_version": "1.0"
+}
