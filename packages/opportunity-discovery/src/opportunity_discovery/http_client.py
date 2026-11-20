@@ -1,0 +1,519 @@
+"""Bounded, polite HTTP fetching with retries, conditional requests, and caching."""
+
+from __future__ import annotations
+
+import ipaddress
+import logging
+import random
+import socket
+import sqlite3
+import threading
+import time
+import zlib
+from concurrent.futures import ThreadPoolExecutor, as_completed
+from dataclasses import dataclass
+from datetime import UTC
+from pathlib import Path
+from typing import Any
+from urllib.parse import urljoin, urlsplit
+from urllib.request import url2pathname
+from urllib.robotparser import RobotFileParser
+
+import httpx
+
+from . import USER_AGENT
+from .config import EngineConfig
+from .constants import HEALTH_RATE_LIMITED, MAX_SOURCE_RESPONSE_BYTES
+
+log = logging.getLogger(__name__)
+
+RETRYABLE_STATUS = {408, 425, 429, 500, 502, 503, 504}
+
+
+@dataclass
+class FetchOutcome:
+    url: str
+    final_url: str | None = None
+    status: int | None = None
+    body: bytes | None = None
+    text: str | None = None
+    content_type: str | None = None
+    etag: str | None = None
+    last_modified: str | None = None
+    not_modified: bool = False
+    from_cache: bool = False
+    error: str | None = None
+    state: str = "ok"
+    duration_ms: int = 0
+
+    @property
+    def ok(self) -> bool:
+        return self.error is None and self.status is not None and self.status < 400
+
+
+def _cached_body(row: Any) -> bytes | None:
+    """Decode a raw_cache body stored as received (NULL encoding) or zlib-compressed."""
+    if row is None or row["content"] is None:
+        return None
+    content = bytes(row["content"])
+    return zlib.decompress(content) if row["content_encoding"] == "zlib" else content
+
+
+class _DomainThrottle:
+    def __init__(self, min_interval: float) -> None:
+        self.min_interval = min_interval
+        self._last: dict[str, float] = {}
+        self._lock = threading.Lock()
+
+    def wait(self, domain: str) -> None:
+        if self.min_interval <= 0:
+            return
+        while True:
+            with self._lock:
+                now = time.monotonic()
+                prev = self._last.get(domain, 0.0)
+                delta = now - prev
+                if delta >= self.min_interval:
+                    self._last[domain] = now
+                    return
+                sleep_for = self.min_interval - delta
+            time.sleep(sleep_for)
+
+
+class Fetcher:
+    """Synchronous polite fetcher; supports file:// for tests/synthetic runs."""
+
+    def __init__(self, cfg: EngineConfig, conn: sqlite3.Connection | None = None) -> None:
+        import sqlite3 as _sq
+
+        self.cfg = cfg
+        self.conn: _sq.Connection = conn or _sq.connect(":memory:", check_same_thread=False)
+        if conn is None:
+            from .db import migrate
+
+            migrate(self.conn)  # ensure raw_cache exists for standalone fetchers
+        self.conn.row_factory = _sq.Row
+        self._conn_lock = threading.RLock()
+        self.client = httpx.Client(
+            timeout=cfg.fetch.timeout_seconds,
+            follow_redirects=False,
+            headers={"User-Agent": USER_AGENT, "Accept-Encoding": "gzip"},
+        )
+        self.throttle = _DomainThrottle(cfg.fetch.per_domain_min_interval_seconds)
+        self._robots: dict[str, RobotFileParser | None] = {}
+        self._robots_lock = threading.Lock()
+
+    # ------------------------------------------------------------------ public
+    def close(self) -> None:
+        self.client.close()
+
+    def fetch(
+        self,
+        url: str,
+        *,
+        extra_headers: dict[str, str] | None = None,
+        use_cache_fallback: bool = True,
+        allowed_hosts: set[str] | None = None,
+        max_response_bytes: int | None = None,
+    ) -> FetchOutcome:
+        start_ms = time.monotonic_ns() // 1_000_000
+        if url.startswith("file://"):
+            return self._fetch_file(url, start_ms)
+        destination_error = self._destination_error(url, allowed_hosts)
+        if destination_error:
+            return FetchOutcome(
+                url=url,
+                error=destination_error,
+                state="failed",
+                duration_ms=time.monotonic_ns() // 1_000_000 - start_ms,
+            )
+        parts = urlsplit(url)
+        domain = parts.hostname or ""
+
+        robots_applies = self.cfg.fetch.respect_robots and parts.scheme in ("http", "https")
+        if robots_applies and not self._robots_allows(url):
+            return FetchOutcome(
+                url=url,
+                state="robots-blocked",
+                error="disallowed by robots.txt",
+                duration_ms=time.monotonic_ns() // 1_000_000 - start_ms,
+            )
+
+        cond_headers = self._conditional_headers(url)
+        headers = dict(extra_headers or {})
+        headers.update(cond_headers)
+
+        attempt = 0
+        backoff = self.cfg.fetch.backoff_base_seconds
+        if max_response_bytes is not None and (
+            type(max_response_bytes) is not int or not 0 < max_response_bytes <= MAX_SOURCE_RESPONSE_BYTES
+        ):
+            raise ValueError(f"max_response_bytes override must be between 1 and {MAX_SOURCE_RESPONSE_BYTES}")
+        response_limit = (
+            max_response_bytes if max_response_bytes is not None else self.cfg.fetch.max_response_bytes
+        )
+        while True:
+            attempt += 1
+            self.throttle.wait(domain)
+            resp = None
+            try:
+                resp, final_url = self._get_with_safe_redirects(
+                    url, headers, allowed_hosts, max_response_bytes=response_limit
+                )
+            except (httpx.TimeoutException, httpx.TransportError, httpx.DecodingError) as exc:
+                error = f"{type(exc).__name__}: {exc}"
+                status = None
+            except ValueError as exc:
+                error = str(exc)
+                status = 400  # unsafe redirects/configuration errors are never retryable
+            else:
+                status = resp.status_code
+                if status == 304:
+                    return self._serve_304(url, final_url, resp, start_ms)
+                if status < 400:
+                    if len(resp.content) > response_limit:
+                        error = f"response exceeded max_response_bytes={response_limit}"
+                        status = 413
+                    else:
+                        self._store_cache(url, resp)
+                        return FetchOutcome(
+                            url=url,
+                            final_url=final_url,
+                            status=status,
+                            body=resp.content,
+                            text=resp.text,
+                            content_type=resp.headers.get("content-type"),
+                            etag=resp.headers.get("etag"),
+                            last_modified=resp.headers.get("last-modified"),
+                            state="ok",
+                            duration_ms=time.monotonic_ns() // 1_000_000 - start_ms,
+                        )
+                else:
+                    error = f"HTTP {status}"
+
+            retryable = status is None or status in RETRYABLE_STATUS
+            if retryable and attempt <= self.cfg.fetch.max_retries:
+                delay = self._retry_delay(status, backoff, resp)
+                log.debug("retry %d for %s in %.1fs (%s)", attempt, url, delay, error)
+                time.sleep(delay)
+                backoff = min(backoff * 2, self.cfg.fetch.backoff_max_seconds)
+                continue
+
+            # final failure -> try cache fallback (preserve prior success)
+            if use_cache_fallback:
+                cached = self._load_cache(url)
+                if cached is not None:
+                    out = FetchOutcome(
+                        url=url,
+                        final_url=url,
+                        status=cached["status"],
+                        body=cached["body"],
+                        text=(cached["body"] or b"").decode("utf-8", "replace"),
+                        content_type=cached["content_type"],
+                        etag=cached["etag"],
+                        last_modified=cached["last_modified"],
+                        from_cache=True,
+                        state="degraded",
+                        error=f"{error}; served from cache",
+                        duration_ms=time.monotonic_ns() // 1_000_000 - start_ms,
+                    )
+                    return out
+            out_state = HEALTH_RATE_LIMITED if status == 429 else "failed"
+            return FetchOutcome(
+                url=url,
+                final_url=None,
+                status=status,
+                error=error,
+                state=out_state,
+                duration_ms=time.monotonic_ns() // 1_000_000 - start_ms,
+            )
+
+    def fetch_many(self, urls: list[str], worker: int | None = None) -> list[FetchOutcome]:
+        max_workers = min(worker or self.cfg.fetch.max_concurrency, len(urls) or 1)
+        results: dict[str, FetchOutcome] = {}
+        with ThreadPoolExecutor(max_workers=max(1, max_workers)) as pool:
+            futures = {pool.submit(self.fetch, u): u for u in urls}
+            for fut in as_completed(futures):
+                url = futures[fut]
+                try:
+                    results[url] = fut.result()
+                except Exception as exc:  # isolation: one failure must not abort the batch
+                    log.warning("unexpected fetch failure for %s: %s", url, exc)
+                    results[url] = FetchOutcome(url=url, error=str(exc), state="failed")
+        return [results[u] for u in urls]
+
+    # ----------------------------------------------------------------- helpers
+    def _fetch_file(self, url: str, start_ms: int) -> FetchOutcome:
+        def failed(message: str) -> FetchOutcome:
+            return FetchOutcome(
+                url=url,
+                error=message,
+                state="failed",
+                duration_ms=time.monotonic_ns() // 1_000_000 - start_ms,
+            )
+
+        try:
+            parts = urlsplit(url)
+        except ValueError as exc:
+            return failed(f"invalid file URI {url!r}: {exc}")
+        if parts.scheme != "file":
+            # fetch() routes on the file:// prefix; anything else is a programming error.
+            return failed(f"unsupported scheme in {url!r}; expected 'file'")
+        authority = parts.hostname
+        if authority not in (None, "localhost"):
+            # Remote/network authorities (UNC hosts, other machines) are unsupported;
+            # never silently map them onto a malformed local path.
+            return failed(
+                f"unsupported file URI authority {parts.netloc!r}: "
+                "only local files (empty or 'localhost' host) are supported"
+            )
+        try:
+            path = Path(url2pathname(parts.path))
+            data = path.read_bytes()
+        except OSError as exc:
+            return failed(str(exc))
+        suffix = path.suffix.lower().lstrip(".")
+        ctype = {
+            "json": "application/json",
+            "csv": "text/csv",
+            "xml": "application/xml",
+            "html": "text/html",
+            "md": "text/markdown",
+            "txt": "text/plain",
+        }.get(suffix, "application/octet-stream")
+        return FetchOutcome(
+            url=url,
+            final_url=url,
+            status=200,
+            body=data,
+            text=data.decode("utf-8", "replace"),
+            content_type=ctype,
+            state="ok",
+            duration_ms=time.monotonic_ns() // 1_000_000 - start_ms,
+        )
+
+    def _robots_allows(self, url: str) -> bool:
+        parts = urlsplit(url)
+        origin = f"{parts.scheme}://{parts.netloc}"
+        with self._robots_lock:
+            rp = self._robots.get(origin)
+        if rp is None:
+            rp = RobotFileParser()
+            robots_url = f"{origin}/robots.txt"
+            try:
+                resp, _final_url = self._get_with_safe_redirects(
+                    robots_url, {"User-Agent": USER_AGENT}, {parts.hostname or ""}
+                )
+                if resp.status_code == 200:
+                    if len(resp.content) > self.cfg.fetch.max_response_bytes:
+                        return False
+                    rp.parse(resp.text.splitlines())
+                else:
+                    rp.allow_all = True  # type: ignore[attr-defined]
+            except httpx.HTTPError:
+                rp.allow_all = True  # type: ignore[attr-defined]
+            with self._robots_lock:
+                self._robots[origin] = rp
+        try:
+            return rp.can_fetch(USER_AGENT, url)
+        except Exception:
+            return True
+
+    def _conditional_headers(self, url: str) -> dict[str, str]:
+        with self._conn_lock:
+            row = self.conn.execute(
+                "SELECT etag, last_modified FROM raw_cache WHERE url = ?", (url,)
+            ).fetchone()
+        headers: dict[str, str] = {}
+        if row:
+            if row["etag"]:
+                headers["If-None-Match"] = row["etag"]
+            if row["last_modified"]:
+                headers["If-Modified-Since"] = row["last_modified"]
+        return headers
+
+    def _serve_304(self, url: str, final_url: str, resp: httpx.Response, start_ms: int) -> FetchOutcome:
+        with self._conn_lock:
+            row = self.conn.execute(
+                "SELECT status, content_type, content, content_encoding, etag, last_modified"
+                " FROM raw_cache WHERE url = ?",
+                (url,),
+            ).fetchone()
+        body = _cached_body(row) or b""
+        return FetchOutcome(
+            url=url,
+            final_url=final_url,
+            status=304,
+            body=body,
+            text=body.decode("utf-8", "replace") if body else None,
+            content_type=row["content_type"] if row else None,
+            etag=resp.headers.get("etag") or (row["etag"] if row else None),
+            last_modified=resp.headers.get("last-modified") or (row["last_modified"] if row else None),
+            not_modified=True,
+            state="not-modified",
+            duration_ms=time.monotonic_ns() // 1_000_000 - start_ms,
+        )
+
+    def _store_cache(self, url: str, resp: httpx.Response) -> None:
+        from datetime import datetime, timedelta
+
+        now = datetime.now(UTC)
+        expires = now + timedelta(days=self.cfg.fetch.cache_days)
+        with self._conn_lock:
+            self.conn.execute(
+                """
+                INSERT INTO raw_cache (url, fetched_at, status, content_type, content,
+                                       content_encoding, content_hash, etag, last_modified,
+                                       expires_at)
+                VALUES (?, ?, ?, ?, ?, 'zlib', ?, ?, ?, ?)
+                ON CONFLICT(url) DO UPDATE SET
+                    fetched_at=excluded.fetched_at, status=excluded.status,
+                    content_type=excluded.content_type, content=excluded.content,
+                    content_encoding=excluded.content_encoding,
+                    content_hash=excluded.content_hash, etag=excluded.etag,
+                    last_modified=excluded.last_modified, expires_at=excluded.expires_at
+                """,
+                (
+                    url,
+                    now.isoformat(),
+                    resp.status_code,
+                    resp.headers.get("content-type"),
+                    zlib.compress(resp.content, 6),
+                    None,
+                    resp.headers.get("etag"),
+                    resp.headers.get("last-modified"),
+                    expires.isoformat(),
+                ),
+            )
+            self.conn.commit()
+
+    def _load_cache(self, url: str) -> dict | None:
+        with self._conn_lock:
+            row = self.conn.execute(
+                "SELECT status, content_type, content, content_encoding, etag, last_modified"
+                " FROM raw_cache WHERE url = ?",
+                (url,),
+            ).fetchone()
+        body = _cached_body(row)
+        if row and body is not None:
+            return {
+                "status": row["status"],
+                "body": body,
+                "content_type": row["content_type"],
+                "etag": row["etag"],
+                "last_modified": row["last_modified"],
+            }
+        return None
+
+    def _get_with_safe_redirects(
+        self,
+        url: str,
+        headers: dict[str, str],
+        allowed_hosts: set[str] | None,
+        *,
+        max_response_bytes: int | None = None,
+    ) -> tuple[httpx.Response, str]:
+        """Follow safe redirects and stream the final response within its byte budget."""
+        current = url
+        response_limit = (
+            max_response_bytes if max_response_bytes is not None else self.cfg.fetch.max_response_bytes
+        )
+        for redirect_count in range(self.cfg.fetch.max_redirects + 1):
+            destination_error = self._destination_error(current, allowed_hosts)
+            if destination_error:
+                raise ValueError(destination_error)
+            with self.client.stream("GET", current, headers=headers, follow_redirects=False) as streamed:
+                if streamed.status_code in (301, 302, 303, 307, 308):
+                    location = streamed.headers.get("location")
+                    if location:
+                        if redirect_count >= self.cfg.fetch.max_redirects:
+                            raise ValueError(f"redirect limit exceeded ({self.cfg.fetch.max_redirects})")
+                        current = urljoin(current, location)
+                        continue
+                    raise ValueError(f"redirect HTTP {streamed.status_code} did not provide Location")
+                if 300 <= streamed.status_code < 400 and streamed.status_code != 304:
+                    raise ValueError(f"unsupported redirect response HTTP {streamed.status_code}")
+                content_length = streamed.headers.get("content-length")
+                if content_length:
+                    try:
+                        declared_length = int(content_length)
+                    except ValueError:
+                        declared_length = 0
+                    if declared_length > response_limit:
+                        raise ValueError(f"response exceeded max_response_bytes={response_limit}")
+                body = bytearray()
+                for chunk in streamed.iter_bytes():
+                    if len(body) + len(chunk) > response_limit:
+                        raise ValueError(f"response exceeded max_response_bytes={response_limit}")
+                    body.extend(chunk)
+                # iter_bytes() has already decoded Content-Encoding. Rebuilding a
+                # response with that header would make httpx decode the body again.
+                decoded_headers = streamed.headers.copy()
+                decoded_headers.pop("content-encoding", None)
+                decoded_headers.pop("content-length", None)
+                response = httpx.Response(
+                    streamed.status_code,
+                    headers=decoded_headers,
+                    content=bytes(body),
+                    request=streamed.request,
+                )
+                return response, current
+        raise ValueError("redirect limit exceeded")
+
+    @staticmethod
+    def _destination_error(url: str, allowed_hosts: set[str] | None) -> str | None:
+        """Reject credentials, non-web schemes, private networks, and off-scope hosts."""
+        try:
+            parts = urlsplit(url)
+        except ValueError as exc:
+            return f"unsafe destination: invalid URL: {exc}"
+        if parts.scheme not in ("http", "https"):
+            return f"unsafe destination: unsupported scheme {parts.scheme!r}"
+        host = (parts.hostname or "").rstrip(".").lower()
+        if not host or parts.username or parts.password:
+            return "unsafe destination: host is missing or credentials are embedded"
+        try:
+            port = parts.port
+        except ValueError as exc:
+            return f"unsafe destination: invalid port: {exc}"
+        port = port or (443 if parts.scheme == "https" else 80)
+        normalized_allowed = {h.rstrip(".").lower() for h in (allowed_hosts or set())}
+        if normalized_allowed and host not in normalized_allowed:
+            return f"unsafe destination: host {host!r} is outside the configured host set"
+        if host == "localhost" or host.endswith(".localhost") or host.endswith(".local"):
+            return f"unsafe destination: local host {host!r} is not allowed"
+        try:
+            literal = ipaddress.ip_address(host)
+        except ValueError:
+            literal = None
+        if literal is not None:
+            return None if literal.is_global else f"unsafe destination: non-public address {host!r}"
+        # RFC-reserved example domains are safe only under synthetic transports and
+        # cannot resolve publicly. Real hostnames are resolved before requests so a
+        # DNS name cannot silently target loopback/private/link-local space.
+        if host == "example.com" or host.endswith(".example.com"):
+            return None
+        try:
+            addresses = {info[4][0] for info in socket.getaddrinfo(host, port, type=socket.SOCK_STREAM)}
+        except OSError as exc:
+            return f"unsafe destination: DNS resolution failed for {host!r}: {exc}"
+        for address in addresses:
+            try:
+                parsed = ipaddress.ip_address(address)
+            except ValueError:
+                return f"unsafe destination: invalid resolved address {address!r}"
+            if not parsed.is_global:
+                return f"unsafe destination: {host!r} resolved to non-public address {address!r}"
+        return None
+
+    @staticmethod
+    def _retry_delay(status: int | None, base_backoff: float, resp: httpx.Response | None = None) -> float:
+        jitter = random.uniform(0, 0.5 * base_backoff)
+        if resp is not None:
+            retry_after = resp.headers.get("Retry-After")
+            if retry_after:
+                try:
+                    return max(float(retry_after), 0.0)
+                except ValueError:
+                    pass
+        return base_backoff + jitter
