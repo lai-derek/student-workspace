@@ -1,0 +1,14 @@
+{
+  "schema_version": "1.0",
+  "name": "academic-planning",
+  "display_name": "Academic Planning",
+  "package": "academic-planning",
+  "owned_paths": ["knowledge/academics/", "artifacts/academic-planning/", ".student-workspace/academic-planning/"],
+  "protected_paths": ["src/", "skills/"],
+  "sqlite_files": ["knowledge/academics/schedules.sqlite"],
+  "check_command": ["academic-planning", "--workspace", "{workspace}", "check", "--summary"],
+  "setup_command": ["academic-planning", "--workspace", "{workspace}", "init"],
+  "setup_options": [],
+  "instructions": "docs/workspace-section.md",
+  "skills": ["plan-academics", "plan-course-schedules", "ucla-class-planner", "audit-academic-planning"]
+}

@@ -1,0 +1,11 @@
+# Academic intake and review
+
+The first supported institution is UCLA undergraduate study. Majors and requirements come from this student's evidence. No particular major, term, destination or preference is preselected. Other institutions need separately verified rules; changing a label does not add institutional support.
+
+1. Preserve the student's latest DARS/audit and any transcript or advisor ruling with `import-source`. Record the audit date and source paths. PDF extraction and interpretation are agent-maintained; there is no automatic DARS parser or rule verifier.
+2. Ask only for missing goals, planning horizon, hard constraints, ordered preferences, current enrollment, transfer/exam credit and unresolved approvals. Separate tentative interests from choices. An opportunity profile, application setup and screening preferences are unnecessary.
+3. Prepare a proposed extraction linked to pages/sections: institution and major; earned award rows and explicit zero-credit duplicates; current coursework; audit requirement slots; historical totals versus current earned/in-progress totals; existing selections and dates. Mark ambiguous findings unknown. Track completeness separately for credits and current_coursework in record_coverage; a requirement list or a single award/course does not establish either total. Assert complete only with dated source evidence and student review; explicitly evidenced zero remains valid. Preserve contradictory evidence rather than choosing an unsupported answer.
+4. Show the student that extraction and the unresolved questions. Obtain their review before adopting it into authoritative academic.yaml. Record corrections and review evidence. Review confirms what was extracted; it does not confer official degree approval. Do not import synthetic example facts.
+5. Keep goals in ../goals/academic-career.md. Run check and build after reconciliation. Empty valid records mean unpopulated intake, not a completed degree audit. Do not infer graduation readiness from blank records.
+
+Use `init --with-abroad` later only if study-abroad planning is requested. Scheduling research and saved Class Planner actions are separate workflows; a draft schedule does not authorize browser writes or enrollment.

@@ -1,0 +1,21 @@
+{
+  "schema_version": "1.0",
+  "name": "opportunity-discovery",
+  "display_name": "Opportunity Discovery",
+  "package": "opportunity-discovery",
+  "owned_paths": [".student-workspace/opportunity-discovery/", "opportunities/"],
+  "protected_paths": ["src/", "schemas/", "config/"],
+  "sqlite_files": [".student-workspace/opportunity-discovery/data/opdisc.sqlite3"],
+  "check_command": ["opdisc", "check", "{workspace}"],
+  "setup_command": ["opdisc", "setup", "{workspace}"],
+  "setup_options": [
+    {
+      "name": "schedule",
+      "label": "Collect new opportunities daily at 7:30 (Windows Task Scheduler)",
+      "args": ["--schedule"],
+      "default": false
+    }
+  ],
+  "instructions": "docs/workspace-section.md",
+  "skills": []
+}

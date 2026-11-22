@@ -4,12 +4,13 @@ Read this before changing anything in this repository.
 
 ## What this repository is
 
-The backbone of a private student workspace: setup and updates, workspace
-state, the shared source registry, knowledge snapshots, backup/restore/audit, a
-workspace-wide check, tool registration, application handoffs, and the shared
-application-writing skills. Tools such as opportunity-discovery and
-academic-planning depend on it and join a workspace through their
-`student-workspace-tool.json`.
+Student Workspace and its tools. The core package is the backbone of a private
+student workspace: setup and updates, workspace state, the shared source
+registry, knowledge snapshots, backup/restore/audit, a workspace-wide check,
+tool registration, application handoffs, and the shared application-writing
+skills. The tools (opportunity-discovery, academic-planning) depend on it and
+join a workspace through their `student-workspace-tool.json`. The hard rules
+below apply to the core; each tool's own rules add to them.
 
 ## Hard rules
 
@@ -34,13 +35,23 @@ academic-planning depend on it and join a workspace through their
 
 ## Where things live
 
-- `src/student_workspace/`: `state.py` (shared helpers), `workspace.py` (init),
-  `sources.py` (registry), `tools.py` (registration, WORKSPACE.md blocks,
-  pointers), `recovery.py`, `check.py`, `applications.py`,
-  `application_checks.py`, `installer.py` (install/update core), `cli.py`.
-- `installer/`: `Install.cmd`, `setup.ps1` (finds Python) and `install.py` (wizard).
-- `scripts/build_release.py`: builds the tool ZIPs from version tags, `release.json` with their SHA-256 and `Student-Tools-Setup.zip`; its docstring has the publishing steps.
-- `schemas/`, `skills/`, `docs/`, `tests/`.
+One repository, separate installable packages. Each package keeps its own
+`pyproject.toml`, tests and `student-workspace-tool.json`, and is zipped and
+installed on its own. A package reaches another only through that package's
+public functions, never its files or data. `packages/opportunity-discovery/`
+has its own `AGENTS.md` with rules for that tool.
 
-Run `python -m pytest`, `ruff check .`, `ruff format --check .` and `mypy`
-before proposing a change, and record results in `VALIDATION.md`.
+- `packages/student-workspace/` (the core):
+  - `src/student_workspace/`: `state.py` (shared helpers), `workspace.py` (init),
+    `sources.py` (registry), `tools.py` (registration, WORKSPACE.md blocks,
+    pointers), `recovery.py`, `check.py`, `applications.py`,
+    `application_checks.py`, `installer.py` (install/update core), `cli.py`.
+  - `installer/`: `Install.cmd`, `setup.ps1` (finds Python) and `install.py` (wizard).
+  - `schemas/`, `skills/`, `docs/`, `tests/`.
+- `packages/opportunity-discovery/`, `packages/academic-planning/`: the tools.
+- `scripts/build_release.py`: zips each package from the release tag, writes `release.json` with their SHA-256 and `Student-Tools-Setup.zip`; its docstring has the publishing steps.
+- `.github/workflows/ci.yml`: one CI run for all packages.
+
+Before proposing a change, run each affected package's checks from its folder
+(the core: `python -m pytest`, `ruff check .`, `ruff format --check .`, `mypy`;
+the tools: as in `ci.yml`), and record results in that package's `VALIDATION.md`.

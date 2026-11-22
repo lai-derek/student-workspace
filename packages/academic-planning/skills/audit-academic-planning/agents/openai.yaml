@@ -1,0 +1,7 @@
+interface:
+  display_name: "Audit Academic Planning"
+  short_description: "Review planning quality, efficiency, and cohesion"
+  default_prompt: "Use $audit-academic-planning to audit this academic-planning conversation and propose specific improvements."
+
+policy:
+  allow_implicit_invocation: false

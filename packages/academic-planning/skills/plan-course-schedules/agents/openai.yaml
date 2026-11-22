@@ -1,0 +1,4 @@
+interface:
+  display_name: "Plan course schedules"
+  short_description: "Research and rank UCLA schedules and backups"
+  default_prompt: "Use $plan-course-schedules for my UCLA course plans."

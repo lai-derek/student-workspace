@@ -1,0 +1,15 @@
+.venv/
+__pycache__/
+*.pyc
+*.egg-info/
+build/
+dist/
+.pytest_cache/
+.work/
+.ruff_cache/
+
+# Accidental private workspace state at the source-checkout root
+/.student-workspace/
+/knowledge/
+/sources/
+/artifacts/

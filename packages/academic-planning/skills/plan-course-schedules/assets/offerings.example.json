@@ -1,0 +1,112 @@
+{
+  "version": 1,
+  "id": "synthetic-1",
+  "institution": "UCLA",
+  "term": "Winter 2031",
+  "observed_at": "2030-11-01",
+  "sources": [
+    {
+      "url": "https://example.edu/catalog"
+    }
+  ],
+  "courses": [
+    {
+      "id": "ART",
+      "title": "Art methods",
+      "units": 4,
+      "aliases": [
+        "ARTS"
+      ]
+    },
+    {
+      "id": "STAT",
+      "title": "Statistics",
+      "units": 5
+    }
+  ],
+  "sections": [
+    {
+      "id": "A8",
+      "course_id": "ART",
+      "component": "lecture",
+      "label": "A8",
+      "availability": "open",
+      "meeting_status": "scheduled",
+      "location": "Campus A",
+      "meetings": [
+        {
+          "days": [
+            "M",
+            "W"
+          ],
+          "start": "08:00",
+          "end": "09:00"
+        }
+      ],
+      "exams": []
+    },
+    {
+      "id": "A12",
+      "course_id": "ART",
+      "component": "lecture",
+      "label": "A12",
+      "availability": "open",
+      "meeting_status": "scheduled",
+      "location": "Campus A",
+      "meetings": [
+        {
+          "days": [
+            "M",
+            "W"
+          ],
+          "start": "12:00",
+          "end": "13:00"
+        }
+      ],
+      "exams": []
+    },
+    {
+      "id": "S9",
+      "course_id": "STAT",
+      "component": "lecture",
+      "label": "S9",
+      "availability": "open",
+      "meeting_status": "scheduled",
+      "location": "Campus A",
+      "meetings": [
+        {
+          "days": [
+            "M",
+            "W"
+          ],
+          "start": "09:00",
+          "end": "10:00"
+        }
+      ],
+      "exams": []
+    }
+  ],
+  "bundles": [
+    {
+      "id": "b-A8",
+      "course_id": "ART",
+      "section_ids": [
+        "A8"
+      ]
+    },
+    {
+      "id": "b-A12",
+      "course_id": "ART",
+      "section_ids": [
+        "A12"
+      ]
+    },
+    {
+      "id": "b-S9",
+      "course_id": "STAT",
+      "section_ids": [
+        "S9"
+      ]
+    }
+  ]
+}

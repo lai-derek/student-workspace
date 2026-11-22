@@ -8,6 +8,10 @@ on:
 permissions:
   contents: read
 
+defaults:
+  run:
+    shell: bash
+
 jobs:
   test:
     name: ${{ matrix.os }} / py${{ matrix.python-version }}
@@ -24,8 +28,31 @@ jobs:
       - uses: actions/setup-python@v7
         with:
           python-version: ${{ matrix.python-version }}
-      - run: python -m pip install -e ".[dev]"
-      - run: ruff format --check .
-      - run: ruff check .
-      - run: mypy
-      - run: python -m pytest
+      - name: Install all packages from this checkout
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e "packages/student-workspace[dev]" \
+            -e "packages/opportunity-discovery[dev]" -e "packages/academic-planning[test]"
+
+      - name: student-workspace
+        working-directory: packages/student-workspace
+        run: |
+          ruff format --check .
+          ruff check .
+          mypy
+          ruff format --check --config pyproject.toml ../../scripts
+          ruff check --config pyproject.toml ../../scripts
+          python -m pytest
+
+      - name: opportunity-discovery
+        working-directory: packages/opportunity-discovery
+        run: |
+          ruff format --check src tests scripts/demo_workspace.py
+          ruff check src tests scripts/demo_workspace.py
+          if [ "$RUNNER_OS" = "Linux" ]; then mypy; fi
+          python -m pytest -q -m "not live" --cov=opportunity_discovery --cov-report=term-missing
+          opdisc audit .
+
+      - name: academic-planning
+        working-directory: packages/academic-planning
+        run: python -m unittest discover -s tests -v
