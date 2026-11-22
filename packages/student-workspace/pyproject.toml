@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "student-workspace"
-version = "0.1.1"
+version = "0.2.0"
 description = "Shared setup, state, recovery and application handoffs for a private student workspace."
 readme = "README.md"
 requires-python = ">=3.14"
@@ -19,7 +19,7 @@ dev = ["pytest>=8.0", "ruff>=0.6", "mypy>=1.10", "jsonschema>=4.21"]
 student-workspace = "student_workspace.cli:main"
 
 [project.urls]
-Homepage = "https://github.com/lai-derek/student-workspace"
+Homepage = "https://github.com/lai-derek/student-workspace/tree/main/packages/student-workspace"
 
 [tool.setuptools.packages.find]
 where = ["src"]

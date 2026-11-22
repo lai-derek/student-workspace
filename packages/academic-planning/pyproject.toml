@@ -4,14 +4,14 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "academic-planning"
-version = "0.3.1"
+version = "0.3.2"
 description = "AI-assisted UCLA course planning and scheduling in a student workspace"
 readme = "README.md"
 license = "MIT"
 license-files = ["LICENSE", "NOTICE.md"]
 requires-python = ">=3.14"
 dependencies = [
-    "student-workspace>=0.1,<0.2",
+    "student-workspace>=0.2,<0.3",
     "PyYAML>=6.0.3,<7",
     "XlsxWriter>=3.2.9,<4",
     "reportlab>=4.4,<5",
@@ -24,7 +24,7 @@ test = ["openpyxl>=3.1,<4", "pypdf>=6,<7", "jsonschema>=4.26,<5"]
 academic-planning = "academic_planning.cli:main"
 
 [project.urls]
-Homepage = "https://github.com/lai-derek/academic-planning"
+Homepage = "https://github.com/lai-derek/student-workspace/tree/main/packages/academic-planning"
 
 [tool.setuptools.packages.find]
 where = ["src"]

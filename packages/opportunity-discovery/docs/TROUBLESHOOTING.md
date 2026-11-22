@@ -3,7 +3,7 @@
 ## Installation
 
 Setup problems (Python, the wizard, updates) are covered in the
-[Student Workspace troubleshooting notes](https://github.com/lai-derek/student-workspace/blob/main/docs/troubleshooting.md).
+[Student Workspace troubleshooting notes](https://github.com/lai-derek/student-workspace/blob/main/packages/student-workspace/docs/troubleshooting.md).
 Setup keeps a log in `.student-workspace/install.log`.
 
 ## Running and viewing results

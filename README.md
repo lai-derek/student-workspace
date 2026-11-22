@@ -9,8 +9,8 @@ run locally.
 
 Tools you can install with it:
 
-- [Opportunity Discovery](https://github.com/lai-derek/opportunity-discovery): collect and rank internships, research positions, programs and events, with a local dashboard.
-- [Academic Planning](https://github.com/lai-derek/academic-planning): UCLA course plans and section schedules.
+- [Opportunity Discovery](packages/opportunity-discovery): collect and rank internships, research positions, programs and events, with a local dashboard.
+- [Academic Planning](packages/academic-planning): UCLA course plans and section schedules.
 
 ## Install (Windows)
 
@@ -54,9 +54,17 @@ Download the latest `Student-Tools-Setup.zip` again and run `Install.cmd` on
 the same folder. Setup backs up the workspace first, replaces only `tools/`, and
 puts the previous tools back if anything fails.
 
-More: [backup and recovery](docs/recovery.md),
-[application drafts](docs/applications.md),
-[troubleshooting](docs/troubleshooting.md) (including updating from PowerShell),
-[validation](VALIDATION.md).
+More: [backup and recovery](packages/student-workspace/docs/recovery.md),
+[application drafts](packages/student-workspace/docs/applications.md),
+[troubleshooting](packages/student-workspace/docs/troubleshooting.md) (including updating from PowerShell),
+[validation](packages/student-workspace/VALIDATION.md).
+
+## Repository layout
+
+Each tool is its own Python package, installed only if the student chooses it:
+
+- `packages/student-workspace/`: the core (setup, workspace state, backups, application handoffs, shared skills) and the setup wizard in `installer/`.
+- `packages/opportunity-discovery/`, `packages/academic-planning/`: the tools.
+- `scripts/build_release.py`: builds one tested release of all packages.
 
 MIT license; see [LICENSE](LICENSE).

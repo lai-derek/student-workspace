@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "opportunity-discovery"
-version = "0.2.2"
+version = "0.2.3"
 description = "Deterministic public opportunity-discovery engine producing versioned lead packets for downstream private review."
 readme = "README.md"
 requires-python = ">=3.14"
@@ -23,7 +23,7 @@ classifiers = [
     "Topic :: Other/Nonlisted Topic",
 ]
 dependencies = [
-    "student-workspace>=0.1,<0.2",
+    "student-workspace>=0.2,<0.3",
     "httpx>=0.27,<1.0",
     "feedparser>=6.0,<7.0",
     "beautifulsoup4>=4.12,<5.0",
@@ -43,7 +43,7 @@ dev = [
 opdisc = "opportunity_discovery.cli:main"
 
 [project.urls]
-Homepage = "https://github.com/lai-derek/opportunity-discovery"
+Homepage = "https://github.com/lai-derek/student-workspace/tree/main/packages/opportunity-discovery"
 
 [tool.setuptools.packages.find]
 where = ["src"]

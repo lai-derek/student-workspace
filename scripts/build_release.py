@@ -1,20 +1,23 @@
 """Build the files for a Student Workspace release.
 
-    python scripts/build_release.py --release 2026.11.0 \
-        --tool ../student-workspace --tool ../opportunity-discovery --tool ../academic-planning
+    python scripts/build_release.py --release 2026.12.0
 
-Each --tool is a checkout whose pyproject.toml version is tagged v<version>.
-The script zips each tag with `git archive`, records the ZIP's SHA-256 in
-release.json and writes Student-Tools-Setup.zip, all into --output (default
+Each package in packages/ (by default all of them; choose with --tool NAME) is
+zipped from the release tag with `git archive <tag>:packages/<name>`, so every
+ZIP has one top-level folder <name>-<version>/ with the package's
+student-workspace-tool.json at its root. The script records each ZIP's SHA-256
+in release.json and writes Student-Tools-Setup.zip, all into --output (default
 dist/). It also writes RELEASE_NOTES.md there, the start of the release
-description with a direct setup link. Publish by creating a release on
-lai-derek/student-workspace with tag <release> (e.g. 2026.11.0), using
-RELEASE_NOTES.md as the description (`--notes-file`) and uploading every other
-file from --output; the release.json URLs point at those uploads.
+description with a direct setup link.
 
-With --local-archives DIR the script instead zips each checkout's Git-visible
+Publish by tagging the release commit <release> (e.g. 2026.12.0), running this
+script, and creating a release on lai-derek/student-workspace with that tag,
+using RELEASE_NOTES.md as the description (`--notes-file`) and uploading every
+other file from --output; the release.json URLs point at those uploads.
+
+With --local-archives DIR the script instead zips each package's Git-visible
 working files into DIR and points release.json at them as file: URLs, which is
-how the installer is tested before anything is published.
+how the installer is tested before anything is committed or published.
 """
 
 from __future__ import annotations
@@ -28,18 +31,21 @@ import zipfile
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
+PACKAGES = ROOT / "packages"
+CORE = PACKAGES / "student-workspace"
 OWNER = "lai-derek"
+DEFAULT_TOOLS = ("student-workspace", "opportunity-discovery", "academic-planning")
 SETUP_FILES = {
-    "Install.cmd": ROOT / "installer" / "Install.cmd",
-    "setup.ps1": ROOT / "installer" / "setup.ps1",
-    "install.py": ROOT / "installer" / "install.py",
-    "installer.py": ROOT / "src" / "student_workspace" / "installer.py",
+    "Install.cmd": CORE / "installer" / "Install.cmd",
+    "setup.ps1": CORE / "installer" / "setup.ps1",
+    "install.py": CORE / "installer" / "install.py",
+    "installer.py": CORE / "src" / "student_workspace" / "installer.py",
 }
 
 
-def tool_info(checkout: Path) -> dict:
-    manifest = json.loads((checkout / "student-workspace-tool.json").read_text(encoding="utf-8"))
-    project = tomllib.loads((checkout / "pyproject.toml").read_text(encoding="utf-8"))["project"]
+def tool_info(package: Path) -> dict:
+    manifest = json.loads((package / "student-workspace-tool.json").read_text(encoding="utf-8"))
+    project = tomllib.loads((package / "pyproject.toml").read_text(encoding="utf-8"))["project"]
     return {
         "name": manifest["name"],
         "display_name": manifest["display_name"],
@@ -48,35 +54,36 @@ def tool_info(checkout: Path) -> dict:
     }
 
 
-def tracked_files(checkout: Path) -> list[str]:
-    """Tracked plus not-ignored files: what the next commit would contain."""
+def tracked_files(package: Path) -> list[str]:
+    """Tracked plus not-ignored files under the package: what the next commit would contain."""
     listed = subprocess.run(
         ["git", "ls-files", "--cached", "--others", "--exclude-standard", "-z"],
-        cwd=checkout,
+        cwd=package,
         capture_output=True,
         check=True,
     ).stdout.decode("utf-8")
-    return sorted(name for name in listed.split("\0") if name and (checkout / name).is_file())
+    return sorted(name for name in listed.split("\0") if name and (package / name).is_file())
 
 
-def local_archive(checkout: Path, info: dict, directory: Path) -> Path:
+def local_archive(package: Path, info: dict, directory: Path) -> Path:
     directory.mkdir(parents=True, exist_ok=True)
     top = f"{info['name']}-{info['version']}"
     archive = directory / f"{top}.zip"
     with zipfile.ZipFile(archive, "w", compression=zipfile.ZIP_DEFLATED) as bundle:
-        for name in tracked_files(checkout):
-            bundle.write(checkout / name, f"{top}/{name}")
+        for name in tracked_files(package):
+            bundle.write(package / name, f"{top}/{name}")
     return archive
 
 
-def tag_archive(checkout: Path, info: dict, directory: Path) -> Path:
-    """ZIP of the committed tag v<version>, with one top-level folder."""
+def release_archive(package: Path, info: dict, directory: Path, ref: str) -> Path:
+    """ZIP of packages/<name> at the committed ref, with one top-level folder."""
     directory.mkdir(parents=True, exist_ok=True)
     top = f"{info['name']}-{info['version']}"
     archive = directory / f"{top}.zip"
+    tree = f"{ref}:{package.relative_to(ROOT).as_posix()}"
     subprocess.run(
-        ["git", "archive", "--format=zip", f"--prefix={top}/", "-o", str(archive), f"v{info['version']}"],
-        cwd=checkout,
+        ["git", "archive", "--format=zip", f"--prefix={top}/", "-o", str(archive), tree],
+        cwd=ROOT,
         check=True,
     )
     return archive
@@ -84,11 +91,10 @@ def tag_archive(checkout: Path, info: dict, directory: Path) -> Path:
 
 def release_notes(release: str, tools: list[dict]) -> str:
     """Release description: one obvious download link, then the tested versions."""
-    setup = (
-        f"https://github.com/{OWNER}/student-workspace/releases/download/{release}/Student-Tools-Setup.zip"
-    )
+    base = f"https://github.com/{OWNER}/student-workspace"
+    setup = f"{base}/releases/download/{release}/Student-Tools-Setup.zip"
     rows = "\n".join(
-        f"| [{tool['display_name']}](https://github.com/{OWNER}/{tool['name']}) | {tool['version']} |"
+        f"| [{tool['display_name']}]({base}/tree/{release}/packages/{tool['name']}) | {tool['version']} |"
         for tool in tools
     )
     return (
@@ -105,24 +111,30 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
         description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
     )
-    parser.add_argument("--release", required=True, help="release name and tag, e.g. 2026.11.0")
-    parser.add_argument("--tool", action="append", required=True, type=Path, help="tool checkout")
+    parser.add_argument("--release", required=True, help="release name and tag, e.g. 2026.12.0")
+    parser.add_argument(
+        "--tool", action="append", choices=DEFAULT_TOOLS, help="package to include (default: all)"
+    )
+    parser.add_argument("--ref", help="git ref to archive (default: the --release tag)")
     parser.add_argument(
         "--local-archives", type=Path, help="zip working files here and reference them as file: URLs"
     )
     parser.add_argument("--output", type=Path, default=ROOT / "dist", help="where the release files go")
     args = parser.parse_args(argv)
     output = args.output.resolve()
+    names = args.tool or list(DEFAULT_TOOLS)
+    if "student-workspace" not in names:
+        parser.error("the release must include student-workspace")
 
     tools = []
-    for checkout in args.tool:
-        checkout = checkout.resolve()
-        info = tool_info(checkout)
+    for name in names:
+        package = PACKAGES / name
+        info = tool_info(package)
         if args.local_archives:
-            archive = local_archive(checkout, info, args.local_archives.resolve())
+            archive = local_archive(package, info, args.local_archives.resolve())
             info["archive"] = archive.as_uri()
         else:
-            archive = tag_archive(checkout, info, output)
+            archive = release_archive(package, info, output, args.ref or args.release)
             info["archive"] = (
                 f"https://github.com/{OWNER}/student-workspace/releases/download/{args.release}/{archive.name}"
             )
@@ -130,8 +142,6 @@ def main(argv: list[str] | None = None) -> int:
         if not info["setup_options"]:
             del info["setup_options"]
         tools.append(info)
-    if "student-workspace" not in {tool["name"] for tool in tools}:
-        parser.error("the release must include the student-workspace checkout")
     release = {"schema_version": "1.0", "release": args.release, "tools": tools}
     text = json.dumps(release, indent=2) + "\n"
 

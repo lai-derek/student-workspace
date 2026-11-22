@@ -18,7 +18,8 @@ import pytest
 from student_workspace import installer
 
 REPO = Path(__file__).parent.parent
-SPEC = importlib.util.spec_from_file_location("build_release", REPO / "scripts" / "build_release.py")
+BUILD_RELEASE = REPO.parent.parent / "scripts" / "build_release.py"
+SPEC = importlib.util.spec_from_file_location("build_release", BUILD_RELEASE)
 assert SPEC and SPEC.loader
 build_release = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(build_release)
@@ -102,7 +103,11 @@ def core_archive(directory: Path, version: str) -> Path:
 
 
 def release(directory: Path, name: str, core: str, fake: str | None, *, fail_setup=False) -> dict:
-    core_zip = core_archive(directory, core)
+    # Each release gets its own folder: two releases with the same core version must not
+    # overwrite each other's archive (zip entry timestamps would change its checksum).
+    own = directory / name
+    own.mkdir()
+    core_zip = core_archive(own, core)
     tools = [
         {
             "name": "student-workspace",
@@ -113,7 +118,7 @@ def release(directory: Path, name: str, core: str, fake: str | None, *, fail_set
         }
     ]
     if fake:
-        archive = fake_tool_archive(directory, fake, fail_setup=fail_setup)
+        archive = fake_tool_archive(own, fake, fail_setup=fail_setup)
         tools.append(
             {
                 "name": "fake-tool",
