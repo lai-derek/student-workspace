@@ -76,13 +76,28 @@ def local_archive(package: Path, info: dict, directory: Path) -> Path:
 
 
 def release_archive(package: Path, info: dict, directory: Path, ref: str) -> Path:
-    """ZIP of packages/<name> at the committed ref, with one top-level folder."""
+    """ZIP of packages/<name> at the committed ref, with one top-level folder.
+
+    Only the package's own .gitattributes applies to a subtree archive, so each
+    package carries its line-ending and binary rules; core.autocrlf is turned off
+    so the archive is the same whichever machine builds it.
+    """
     directory.mkdir(parents=True, exist_ok=True)
     top = f"{info['name']}-{info['version']}"
     archive = directory / f"{top}.zip"
     tree = f"{ref}:{package.relative_to(ROOT).as_posix()}"
     subprocess.run(
-        ["git", "archive", "--format=zip", f"--prefix={top}/", "-o", str(archive), tree],
+        [
+            "git",
+            "-c",
+            "core.autocrlf=false",
+            "archive",
+            "--format=zip",
+            f"--prefix={top}/",
+            "-o",
+            str(archive),
+            tree,
+        ],
         cwd=ROOT,
         check=True,
     )
