@@ -5,7 +5,7 @@
   "package": "student-workspace",
   "owned_paths": [".student-workspace/", "applications/"],
   "protected_paths": ["src/", "schemas/", "skills/"],
-  "sqlite_files": [],
+  "sqlite_files": [".student-workspace/student-workspace/studio.sqlite3"],
   "check_command": null,
   "setup_command": null,
   "setup_options": [],

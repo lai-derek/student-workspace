@@ -10,6 +10,11 @@ in release.json and writes Student-Tools-Setup.zip, all into --output (default
 dist/). It also writes RELEASE_NOTES.md there, the start of the release
 description with a direct setup link.
 
+The interface (frontend/, React) is built once here with `npm ci` and
+`npm run build`, and the result is added to the student-workspace ZIP, so
+students install only Python packages. --no-frontend-build reuses an existing
+build.
+
 Publish by tagging the release commit <release> (e.g. 2026.12.0), running this
 script, and creating a release on lai-derek/student-workspace with that tag,
 using RELEASE_NOTES.md as the description (`--notes-file`) and uploading every
@@ -25,6 +30,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import shutil
 import subprocess
 import tomllib
 import zipfile
@@ -33,6 +39,9 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 PACKAGES = ROOT / "packages"
 CORE = PACKAGES / "student-workspace"
+FRONTEND = ROOT / "frontend"
+# The built interface: produced by `npm run build`, ignored by Git, added to the core's ZIP here.
+STATIC = CORE / "src" / "student_workspace" / "web" / "static"
 OWNER = "lai-derek"
 DEFAULT_TOOLS = ("student-workspace", "opportunity-discovery", "academic-planning")
 SETUP_FILES = {
@@ -104,6 +113,28 @@ def release_archive(package: Path, info: dict, directory: Path, ref: str) -> Pat
     return archive
 
 
+def build_frontend() -> None:
+    """Install the pinned packages from package-lock.json and build the interface into STATIC."""
+    npm = shutil.which("npm")
+    if npm is None:
+        raise SystemExit(
+            "npm is needed to build the interface (install Node.js), or pass --no-frontend-build"
+        )
+    subprocess.run([npm, "ci", "--no-fund", "--no-audit"], cwd=FRONTEND, check=True)
+    subprocess.run([npm, "run", "build"], cwd=FRONTEND, check=True)
+
+
+def add_built_interface(archive: Path, top: str) -> int:
+    """Copy the built interface into the core package's ZIP, where the server looks for it."""
+    files = sorted(p for p in STATIC.rglob("*") if p.is_file())
+    if not (STATIC / "index.html").is_file():
+        raise SystemExit(f"no built interface in {STATIC}; run without --no-frontend-build")
+    with zipfile.ZipFile(archive, "a", compression=zipfile.ZIP_DEFLATED) as bundle:
+        for path in files:
+            bundle.write(path, f"{top}/{path.relative_to(CORE).as_posix()}")
+    return len(files)
+
+
 def release_notes(release: str, tools: list[dict]) -> str:
     """Release description: one obvious download link, then the tested versions."""
     base = f"https://github.com/{OWNER}/student-workspace"
@@ -135,11 +166,18 @@ def main(argv: list[str] | None = None) -> int:
         "--local-archives", type=Path, help="zip working files here and reference them as file: URLs"
     )
     parser.add_argument("--output", type=Path, default=ROOT / "dist", help="where the release files go")
+    parser.add_argument(
+        "--no-frontend-build",
+        action="store_true",
+        help="reuse the interface already built into the core package",
+    )
     args = parser.parse_args(argv)
     output = args.output.resolve()
     names = args.tool or list(DEFAULT_TOOLS)
     if "student-workspace" not in names:
         parser.error("the release must include student-workspace")
+    if not args.no_frontend_build:
+        build_frontend()
 
     tools = []
     for name in names:
@@ -153,6 +191,8 @@ def main(argv: list[str] | None = None) -> int:
             info["archive"] = (
                 f"https://github.com/{OWNER}/student-workspace/releases/download/{args.release}/{archive.name}"
             )
+        if name == "student-workspace":
+            add_built_interface(archive, f"{info['name']}-{info['version']}")
         info["sha256"] = hashlib.sha256(archive.read_bytes()).hexdigest()
         if not info["setup_options"]:
             del info["setup_options"]

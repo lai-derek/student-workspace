@@ -24,6 +24,14 @@ again on the same folder; when everything is current it reinstalls the same
 versions. If `tools\.venv` still works, `.\tools\.venv\Scripts\student-workspace.exe update . --reinstall`
 does the same from PowerShell.
 
+**The app shows "This page needs that link to sign in".** The browser tab was
+opened without the launch link, for example from a bookmark or after the app
+stopped. If the launcher window is still open, open the `Open:` link it shows.
+Otherwise double-click `Open Student Workspace.cmd` again.
+
+**The launcher says "Student Workspace is not installed in this folder".** The
+app in `tools\.venv` is missing. Run `Install.cmd` again on the same folder.
+
 **"tools/NAME is a Git checkout".** That tool was installed for development;
 update it with Git and pip instead of setup.
 

@@ -7,8 +7,9 @@ notes, and a check
 confirms that the result is complete before you use it. Nothing is submitted
 for you.
 
-Opportunity Discovery creates handoffs from its dashboard. For any other
-application, create one yourself as shown below.
+Opportunity Discovery creates handoffs from its dashboard. In Application
+Studio, **Agent handoff** creates a request for one resume section. To create
+a handoff from PowerShell, follow the steps below.
 
 Open PowerShell in your workspace folder and set two variables:
 

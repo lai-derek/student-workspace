@@ -10,10 +10,16 @@ readme = "README.md"
 requires-python = ">=3.14"
 license = "MIT"
 license-files = ["LICENSE"]
-dependencies = []
+dependencies = [
+    "fastapi>=0.165,<1",
+    "uvicorn>=0.54,<1",
+    "typst>=0.15.2,<0.16",
+    "pypdf>=6,<8",
+    "pdfminer.six>=20250000",
+]
 
 [project.optional-dependencies]
-dev = ["pytest>=8.0", "ruff>=0.6", "mypy>=1.10", "jsonschema>=4.21"]
+dev = ["pytest>=8.0", "ruff>=0.6", "mypy>=1.10", "jsonschema>=4.21", "httpx>=0.28"]
 
 [project.scripts]
 student-workspace = "student_workspace.cli:main"
@@ -25,7 +31,7 @@ Homepage = "https://github.com/lai-derek/student-workspace/tree/main/packages/st
 where = ["src"]
 
 [tool.setuptools.package-data]
-student_workspace = ["workspace-section.md", "py.typed"]
+student_workspace = ["workspace-section.md", "py.typed", "studio/templates/*.typ", "studio/migrations/*.sql", "web/static/**/*"]
 
 [tool.ruff]
 line-length = 110

@@ -14,15 +14,14 @@ Tools you can install with it:
 
 ## Install (Windows)
 
-You need Python 3.14 or newer (3.15 recommended) and an AI agent that can read
-files and run commands. If setup can't find Python, it offers to install it with
-winget and asks first.
+You need Python 3.14 or newer (3.15 recommended). If setup can't find Python,
+it offers to install it with winget. Bring an agent that can read files and run
+commands for application drafts and planning.
 
 1. Download [Student-Tools-Setup.zip](https://github.com/lai-derek/student-workspace/releases/latest/download/Student-Tools-Setup.zip) and extract it (right-click, Extract All).
-2. In the extracted folder, double-click `Install.cmd`. Windows may ask once
-   about an unverified publisher.
+2. In the extracted folder, double-click `Install.cmd`.
 3. In the wizard, choose a folder (default `Documents\Student Workspace`) and the
-   tools you want. The last page can open the folder for you.
+   tools you want. Select **Open folder** on the last page to find your workspace.
 
 Your files stay in that folder. The installed tool code goes in its `tools/`
 subfolder.
@@ -32,14 +31,13 @@ On Linux, run `python install.py` from the extracted folder for the same wizard
 
 ## Use
 
-Open the workspace folder in your AI agent and ask it to get you started, for
-example "add my resume" or "help me draft this application". Each installed tool
-adds its own requests, such as "find internships for me" with Opportunity
-Discovery or "plan winter" with Academic Planning. The generated `WORKSPACE.md`
-tells the agent how the folder and tools work.
+With the released setup (2026.11.1), open the workspace folder in your AI agent
+and ask it to help you draft an application. Each installed tool adds its own
+requests, such as "find internships for me" with
+Opportunity Discovery or "plan winter" with Academic Planning. The generated
+`WORKSPACE.md` tells the agent how the folder and tools work.
 
-To check that everything is set up correctly, open PowerShell in the workspace
-folder and run:
+To check the setup from PowerShell in the workspace folder:
 
 ```powershell
 .\tools\.venv\Scripts\student-workspace.exe check .
@@ -48,11 +46,40 @@ folder and run:
 It prints `workspace check: current` when all is well. Otherwise it names the
 tool that needs attention and what to do.
 
+## Try Application Studio from source
+
+The Studio is available from the source checkout. With Python 3.15 and Node.js
+24 installed, open PowerShell in the repository and run:
+
+```powershell
+py -3.15 -m venv .venv
+.\.venv\Scripts\python.exe -m pip install -e packages/student-workspace
+npm.cmd ci --prefix frontend
+npm.cmd run build --prefix frontend
+```
+
+After the build succeeds, start the app with a new demo workspace:
+
+```powershell
+$demo = Join-Path $env:TEMP ("student-workspace-demo-" + [guid]::NewGuid())
+.\.venv\Scripts\student-workspace.exe init $demo
+.\.venv\Scripts\student-workspace.exe serve $demo
+```
+
+Keep the PowerShell window open while using the app. In **Applications**,
+select **New resume**. Start with a blank resume or import a Jake-style LaTeX
+file. Double-click bullets in the preview to edit them. **Export .typ + .pdf**
+writes Typst source and a PDF to the application folder. **Screening checks**
+checks PDF readability and highlights the job posting terms your resume covers.
+
+To ask your own agent for alternatives, use **Agent handoff**. Give it the
+saved `HANDOFF.md`, then refresh the request list and import its variants.
+
 ## Update or add tools
 
 Download the latest `Student-Tools-Setup.zip` again and run `Install.cmd` on
-the same folder. Setup backs up the workspace first, replaces only `tools/`, and
-puts the previous tools back if anything fails.
+the same folder. Setup backs up the workspace before updating the installed
+tools and restores the previous tools if the update fails.
 
 More: [backup and recovery](packages/student-workspace/docs/recovery.md),
 [application drafts](packages/student-workspace/docs/applications.md),

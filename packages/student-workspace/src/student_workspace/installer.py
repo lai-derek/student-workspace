@@ -363,6 +363,7 @@ GENERATED_FILES = (
     "AGENTS.md",
     "CLAUDE.md",
     "Open Dashboard.cmd",
+    "Open Student Workspace.cmd",
 )
 GENERATED_FOLDERS = (".agents/skills", ".claude/skills")
 

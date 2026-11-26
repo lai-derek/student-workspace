@@ -15,3 +15,9 @@ dist/
 /applications/
 /inbox/
 /tools/
+
+# Built front end (produced by the release build, not committed)
+/packages/student-workspace/src/student_workspace/web/static/
+
+# Front-end dependencies
+node_modules/

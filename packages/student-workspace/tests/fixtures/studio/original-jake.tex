@@ -1,0 +1,36 @@
+% Synthetic resume using the original Jake's Resume header and skills layout.
+\documentclass[letter,11pt]{article}
+\begin{document}
+\begin{center}
+    \textbf{\Huge \scshape Sam Lee} \\ \vspace{1pt}
+    \small 123-456-7890 $|$ \href{mailto:sam@example.com}{\underline{sam@example.com}} $|$
+    \href{https://github.com/example-sam}{\underline{github.com/example-sam}}
+\end{center}
+
+\section{Experience}
+  \resumeSubHeadingListStart
+    \resumeSubheading
+      {Undergraduate Research Assistant}{June 2025 -- Present}
+      {Example University}{College Station, TX}
+      \resumeItemListStart
+        \resumeItem{Developed a REST API using FastAPI and PostgreSQL to store data from learning management systems}
+      \resumeItemListEnd
+  \resumeSubHeadingListEnd
+
+\section{Projects}
+    \resumeSubHeadingListStart
+      \resumeProjectHeading
+          {\textbf{Gitlytics} $|$ \emph{Python, Flask, React}}{June 2025 -- Present}
+          \resumeItemListStart
+            \resumeItem{Developed a full-stack web application with Flask serving a REST API}
+          \resumeItemListEnd
+    \resumeSubHeadingListEnd
+
+\section{Technical Skills}
+ \begin{itemize}[leftmargin=0.15in, label={}]
+    \small{\item{
+     \textbf{Languages}{: Java, Python, C/C++, SQL} \\
+     \textbf{Frameworks}{: React, Flask, FastAPI}
+    }}
+ \end{itemize}
+\end{document}

@@ -1,0 +1,40 @@
+% Synthetic resume in the Jake's Resume style (fictional person), for import tests.
+\documentclass[letterpaper,11pt]{article}
+\newcommand{\resumeItem}[1]{\item #1}
+\begin{document}
+\fontsize{10.5}{12.4}\selectfont
+\resumeHeader{Alex Rivera}{%
+555-010-0199 \textbar{} \resumeLink{mailto:alex@example.edu}{alex@example.edu} \textbar{}
+\resumeLink{https://github.com/example-alex}{github.com/example-alex}}
+\vspace{-9pt}
+
+\section{Education}
+\resumeSubHeadingListStart
+\resumeSubheading{Example University}{Los Angeles, CA}
+{\textit{B.S. in Electrical Engineering}}{\textit{Expected Jun. 2030}}
+\newline Selected coursework \textbar{} Linear Algebra, Python
+\item \textbf{Lakeside High School} \textbar{} Valedictorian \textbar{} 12 AP exams \hfill Jun. 2026
+\resumeSubHeadingListEnd
+
+\section{Projects}
+\resumeSubHeadingListStart
+\resumeProjectHeading{\resumeLink{https://github.com/example-alex/notes}{\textbf{Offline Note Taker}} \textbar{} \textit{Python, ONNX Runtime}}{2026 -- Present}
+\resumeItemListStart
+\resumeItem{Built an offline Windows app that transcribes lectures and writes \textbf{structured notes}.}
+\resumeItem{Compared nine local models; the default reached 3.1\% word error versus 5.6\% for the baseline.}
+\resumeItemListEnd
+\resumeSubHeadingListEnd
+
+\section{Leadership}
+\resumeSubHeadingListStart
+\resumeSubheading{President, Cultural Club}{2024 -- 2026}{\textit{Lakeside High School}}{Springfield, CA}
+\resumeItemListStart
+\resumeItem{Led monthly meetings for 50+ members and organized events for~100+~students.}
+\resumeItem{Raised \$500+ annually \& sourced snacks from local businesses; it\textquotesingle s a tradition.}
+\resumeItemListEnd
+\resumeSubHeadingListEnd
+
+\section{Technical Skills}
+\textbf{Languages:} Python, C++, SQL\\
+\textbf{Tools \& Frameworks:} PyTorch, Git
+\end{document}

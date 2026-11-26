@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import contextlib
 import json
 import sys
 from collections.abc import Callable
@@ -272,6 +273,103 @@ def cmd_update(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_resume(args: argparse.Namespace) -> int:
+    """Application Studio from the command line (for scripts and AI agents)."""
+    from .studio import ats, export, handoff, importer
+    from .studio.render import Renderer
+    from .studio.store import Studio
+
+    root = Path(args.workspace)
+    with Studio(root) as studio:
+        action = args.resume_command
+        if action == "list":
+            rows = studio.resumes()
+            lines = [
+                f"{r['application_folder']}: " + ", ".join(f"{v['name']} ({v['id']})" for v in r["versions"])
+                for r in rows
+            ] or ["no resumes yet"]
+            _emit(args, rows, lines)
+        elif action == "import-tex":
+            text = Path(args.tex_file).read_text(encoding="utf-8")
+            result = importer.import_resume(studio, args.application_folder, text, template=args.template)
+            _emit(
+                args,
+                result,
+                [
+                    f"imported version {result['version_id']}: {result['sections']} sections, "
+                    f"{result['bullets']} bullets, {result['skills']} skill lines"
+                ],
+            )
+        elif action == "import-evidence":
+            ids = importer.import_evidence_matrix(studio, Path(args.matrix))
+            _emit(args, {"evidence_ids": ids}, [f"imported {len(ids)} evidence notes"])
+        elif action == "show":
+            version = studio.version(args.version_id)
+            lines = [f"{version['name']} ({version['template']}) for {version['application_folder']}"]
+            for section in version["sections"]:
+                lines.append(
+                    f"## {section['title']}{' (hidden)' if section['hidden'] else ''}  [{section['id']}]"
+                )
+                for entry in section["entries"]:
+                    lines.append(
+                        f"- {entry['title']}{' (hidden)' if entry['hidden'] else ''}  [{entry['id']}]"
+                    )
+                    for bullet in entry["bullets"]:
+                        mark = " (hidden)" if bullet["hidden"] else ""
+                        lines.append(f"    * {bullet['text']}{mark}  [{bullet['id']}]")
+            _emit(args, version, lines)
+        elif action == "export":
+            result = export.export_version(studio, args.version_id, replace_outside_edits=args.replace)
+            _emit(args, result, [f"wrote {result['source_path']} and {result['pdf_path']}"])
+        elif action == "verify":
+            ok = export.verify_export(studio, args.version_id)
+            state = export.export_state(studio, args.version_id)
+            _emit(
+                args,
+                {"matches": ok, **state},
+                [
+                    f"{state['pdf_path']}: "
+                    + ("matches its source" if ok else f"does not match ({state['state']})")
+                ],
+            )
+            return 0 if ok else 1
+        elif action == "check":
+            version = studio.version(args.version_id)
+            data = studio.render_data(args.version_id)
+            rendered = Renderer().render(data, version["template"])
+            report = ats.parse_check(rendered.pdf, data, margin_in=data["settings"]["margin"])
+            coverage = ats.keyword_coverage(
+                version["posting_text"], report["extracted_text"], studio.evidence()
+            )
+            report.pop("extracted_text")
+            lines = [f"[{f['level']}] {f['message']}" for f in report["findings"]]
+            if coverage["terms"]:
+                lines.append(f"posting terms covered: {coverage['covered']} of {len(coverage['terms'])}")
+            _emit(args, {"parse": report, "keywords": coverage}, lines)
+            return 1 if report["result"] == "error" else 0
+        elif action == "ask-ai":
+            result = handoff.ask_ai(studio, args.version_id, args.section_id, args.request_text)
+            _emit(args, result, [f"created {result['request_path']}; give its HANDOFF.md to your AI agent"])
+        elif action == "import-variants":
+            result = handoff.import_variants(studio, args.request_path)
+            _emit(args, result, [f"imported {result['added']} variants; skipped {len(result['skipped'])}"])
+    return 0
+
+
+def cmd_serve(args: argparse.Namespace) -> int:
+    # Imported here so the other commands don't pay for loading the web stack.
+    from .web.serve import serve
+
+    with contextlib.suppress(KeyboardInterrupt):  # Ctrl+C is the normal way to stop it
+        serve(
+            Path(args.workspace),
+            port=args.port,
+            open_browser=not args.no_browser,
+            dev_origins=tuple(args.dev_origin),
+        )
+    return 0
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="student-workspace",
@@ -353,6 +451,46 @@ def build_parser() -> argparse.ArgumentParser:
     p.set_defaults(func=cmd_apply)
     p.add_argument("workspace")
     p.add_argument("request_path", help="applications/.../requests/req_... folder")
+    resume = sub.add_parser("resume", help="Application Studio: resumes as data, typeset with Typst")
+    resume_sub = resume.add_subparsers(dest="resume_command", required=True)
+
+    def resume_cmd(name: str, help_text: str, *extra: str) -> argparse.ArgumentParser:
+        command = resume_sub.add_parser(name, help=help_text)
+        command.set_defaults(func=cmd_resume)
+        command.add_argument("workspace")
+        for argument in extra:
+            command.add_argument(argument)
+        return command
+
+    resume_cmd("list", "list resumes and their versions")
+    p = resume_cmd(
+        "import-tex", "create a resume from a Jake's-style LaTeX file", "application_folder", "tex_file"
+    )
+    p.add_argument("--template", choices=("jake", "classic", "modern"), default="jake")
+    resume_cmd("import-evidence", "add an evidence-matrix.md table's rows as evidence notes", "matrix")
+    resume_cmd("show", "print a version with its ids", "version_id")
+    p = resume_cmd("export", "write resume-YYYY-MM-DD.typ and .pdf into the application folder", "version_id")
+    p.add_argument("--replace", action="store_true", help="overwrite files changed outside the studio")
+    resume_cmd("verify", "recompile the exported source and compare it with the exported PDF", "version_id")
+    resume_cmd("check", "resume screening checks (parse check and posting keywords)", "version_id")
+    resume_cmd(
+        "ask-ai",
+        "create a handoff asking your AI for variants of one section",
+        "version_id",
+        "section_id",
+        "request_text",
+    )
+    resume_cmd("import-variants", "store the variants from an answered studio handoff", "request_path")
+    p = add("serve", cmd_serve, "open the Student Workspace app in the browser (runs until stopped)")
+    p.add_argument("--port", type=int, default=0, help="port on 127.0.0.1 (default: any free port)")
+    p.add_argument("--no-browser", action="store_true", help="print the link instead of opening it")
+    p.add_argument(
+        "--dev-origin",
+        action="append",
+        default=[],
+        metavar="URL",
+        help="also accept this origin, e.g. http://localhost:5173 for the Vite dev server",
+    )
     p = add("update", cmd_update, "install the latest tested release into tools/ (backs up first)")
     p.add_argument("--release", default=None, help="release.json path or URL (default: latest release)")
     p.add_argument("--add", action="append", default=[], metavar="TOOL", help="also install this tool")
