@@ -20,6 +20,10 @@ starting a resume, exporting it, and finding the update and recovery guides.
   and updated installer. The archive checksums matched the manifest.
 - Public-repo readiness and reader-experience reviews checked the proposed
   files for private or generated material and verified the linked reader path.
+- PR #2's original CI run passed both Windows jobs and the frontend job.
+  The Python runtime matrix now targets Windows. Opportunity Discovery's
+  mypy check passed locally on Windows with Python 3.14 and 3.15 and runs on
+  both Windows CI jobs. The frontend build still runs on Ubuntu.
 
 ## 0.2.0 in progress: Application Studio (checked 2026-11-22, native Windows 11, Python 3.15.2 and 3.14.10)
 
@@ -40,9 +44,8 @@ in three templates, edited directly with a live, clickable preview, exported as
 | Local test release (`build_release.py --local-archives`, with `npm ci` and the build) | core ZIP contains the interface, templates and migrations. Fresh install from the new setup ZIP and an update of a published 2026.11.1 workspace with its own CLI: `check` exit 0, launcher created, the installed app served the interface, imported, previewed, exported, and `resume verify` matched |
 | Backup | includes `studio.sqlite3`; integrity ok |
 
-Not verified yet: GitHub CI for these changes, Linux, the wizard's new "Open
-Student Workspace" button clicked by hand, and the handoff round trip with
-a real agent (tested with a simulated agent response).
+Manual checks pending: the wizard's **Open Student Workspace** button and a
+handoff round trip with a real agent (tested with a simulated response).
 
 ## 0.2.0 in progress: local app server (checked 2026-11-22, native Windows 11, Python 3.15.2 and 3.14.10)
 

@@ -26,9 +26,6 @@ commands for application drafts and planning.
 Your files stay in that folder. The installed tool code goes in its `tools/`
 subfolder.
 
-On Linux, run `python install.py` from the extracted folder for the same wizard
-(needs `python3-tk`). Only Windows has been tested.
-
 ## Use
 
 With the released setup (2026.11.1), open the workspace folder in your AI agent
