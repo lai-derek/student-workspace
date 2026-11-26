@@ -14,15 +14,12 @@ defaults:
 
 jobs:
   test:
-    name: ${{ matrix.os }} / py${{ matrix.python-version }}
-    runs-on: ${{ matrix.os }}
+    name: windows-latest / py${{ matrix.python-version }}
+    runs-on: windows-latest
     strategy:
       fail-fast: false
       matrix:
-        include:
-          - {os: windows-latest, python-version: "3.14"}
-          - {os: windows-latest, python-version: "3.15"}
-          - {os: ubuntu-latest, python-version: "3.15"}
+        python-version: ["3.14", "3.15"]
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-python@v7
@@ -49,10 +46,28 @@ jobs:
         run: |
           ruff format --check src tests scripts/demo_workspace.py
           ruff check src tests scripts/demo_workspace.py
-          if [ "$RUNNER_OS" = "Linux" ]; then mypy; fi
+          mypy
           python -m pytest -q -m "not live" --cov=opportunity_discovery --cov-report=term-missing
           opdisc audit .
 
       - name: academic-planning
         working-directory: packages/academic-planning
         run: python -m unittest discover -s tests -v
+
+  frontend:
+    name: frontend (typecheck, test, build)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - run: npm ci --no-fund --no-audit
+      - run: npm run typecheck
+      - run: npm test
+      - run: npm run build

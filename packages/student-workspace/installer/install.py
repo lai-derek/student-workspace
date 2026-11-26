@@ -335,25 +335,39 @@ class Wizard(ttk.Frame):
             return
         assert self.result is not None
         self.heading.configure(text="Finished")
+        has_app_launcher = os.name == "nt" and (self.workspace() / "Open Student Workspace.cmd").is_file()
+        next_step = (
+            "Open Student Workspace to edit resumes, or open the folder in your AI agent."
+            if has_app_launcher
+            else "Open the folder in your AI agent to get started."
+        )
         check = {0: "current", 2: "stale (see the log)", 1: "reported problems (see the log)"}
         self.text(
             f"Student Workspace is ready in {self.result['workspace']}.\n"
             f"Workspace check: {check.get(self.result['check_exit_code'], 'unknown')}.\n"
-            "Open the folder with your AI agent and ask it what to do next.",
+            f"{next_step}",
             0,
         )
         buttons = ttk.Frame(self.body)
         buttons.grid(row=1, column=0, sticky="w", pady=(8, 0))
         ttk.Button(buttons, text="Open folder", command=self.open_folder).grid(row=0, column=0, padx=(0, 6))
+        if has_app_launcher:
+            ttk.Button(buttons, text="Open Student Workspace", command=self.open_app).grid(
+                row=0, column=1, padx=(0, 6)
+            )
         dashboard = self.workspace() / "Open Dashboard.cmd"
         if dashboard.is_file():
-            ttk.Button(buttons, text="Open dashboard", command=self.open_dashboard).grid(row=0, column=1)
+            ttk.Button(buttons, text="Open dashboard", command=self.open_dashboard).grid(row=0, column=2)
 
     def open_folder(self) -> None:
         if os.name == "nt":
             os.startfile(self.workspace())  # type: ignore[attr-defined]
         else:
             subprocess.Popen(["xdg-open", str(self.workspace())])
+
+    def open_app(self) -> None:
+        if os.name == "nt":
+            os.startfile(self.workspace() / "Open Student Workspace.cmd")  # type: ignore[attr-defined]
 
     def open_dashboard(self) -> None:
         if os.name == "nt":

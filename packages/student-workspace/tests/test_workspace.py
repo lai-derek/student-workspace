@@ -1,6 +1,7 @@
 """Workspace initialization, tool registration, generated instructions, pointers and check."""
 
 import json
+import os
 from pathlib import Path
 
 import pytest
@@ -15,7 +16,7 @@ from student_workspace.tools import (
     render_workspace_md,
     unregister_tool,
 )
-from student_workspace.workspace import initialize_workspace
+from student_workspace.workspace import APP_LAUNCHER, initialize_workspace
 
 REPO = Path(__file__).parent.parent
 STARTERS = {
@@ -27,6 +28,18 @@ STARTERS = {
     f"{STATE_DIR}/source-manifest.json",
     f"{STATE_DIR}/workspace.json",
 }
+
+
+@pytest.mark.skipif(os.name != "nt", reason="The launcher is a Windows command file")
+def test_initializer_keeps_a_user_owned_launcher(tmp_path):
+    launcher = tmp_path / APP_LAUNCHER
+    original = b"@echo off\r\necho My launcher\r\n"
+    launcher.write_bytes(original)
+
+    result = initialize_workspace(tmp_path)
+
+    assert launcher.read_bytes() == original
+    assert APP_LAUNCHER not in result.updated_files
 
 
 def fake_tool(tmp_path: Path, *, name="fake-tool", check=None, skills=(), instructions=None) -> Path:
@@ -61,7 +74,8 @@ def test_initializer_builds_layout_and_generated_instructions(tmp_path):
     result = initialize_workspace(root)
     for folder in ("inbox", "sources", "knowledge", "applications", "tools", STATE_DIR):
         assert (root / folder).is_dir()
-    assert set(result.created_files) == STARTERS
+    launcher = {"Open Student Workspace.cmd"} if os.name == "nt" else set()
+    assert set(result.created_files) == STARTERS | launcher
     metadata = json.loads((root / STATE_DIR / "workspace.json").read_text(encoding="utf-8"))
     assert metadata == {
         "schema_version": "1.0",

@@ -14,8 +14,9 @@ below apply to the core; each tool's own rules add to them.
 
 ## Hard rules
 
-1. **No model or LLM dependency, no telemetry.** Everything is deterministic
-   standard-library Python; the user's own agent does the AI work.
+1. **No model or LLM dependency, no telemetry.** The code is deterministic;
+   the user's own agent does the AI work. Third-party packages are added only
+   for a feature that needs them (the local app uses FastAPI and uvicorn).
 2. **No personal data in this repository.** Skills, fixtures and examples are
    synthetic or generic. Private state lives only in a user-selected workspace.
 3. **Updates never touch personal files.** The installer changes only
@@ -32,6 +33,9 @@ below apply to the core; each tool's own rules add to them.
    do not verify Windows behavior.
 7. **No submissions or authenticated automation.** Application handoffs prepare
    files for the user; nothing is submitted, sent or uploaded.
+8. **The local app listens only on 127.0.0.1**, and every request passes the
+   checks in `web/security.py`: Host, session cookie, and for writes the Origin
+   plus the `X-Student-Workspace` header. Don't add routes that bypass them.
 
 ## Where things live
 
@@ -46,6 +50,8 @@ has its own `AGENTS.md` with rules for that tool.
     `sources.py` (registry), `tools.py` (registration, WORKSPACE.md blocks,
     pointers), `recovery.py`, `check.py`, `applications.py`,
     `application_checks.py`, `installer.py` (install/update core), `cli.py`.
+  - `src/student_workspace/web/`: the local app (`serve` command): `app.py`
+    (routes), `security.py` (request checks), `serve.py` (startup).
   - `installer/`: `Install.cmd`, `setup.ps1` (finds Python) and `install.py` (wizard).
   - `schemas/`, `skills/`, `docs/`, `tests/`.
 - `packages/opportunity-discovery/`, `packages/academic-planning/`: the tools.
